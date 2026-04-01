@@ -38,7 +38,7 @@ describe("Angular Strangerlist: Challenge Suite", () => {
       expect(await StrangerPage.isTextInList(uniqueText)).toBe(false);
     } else {
       throw new Error(
-        `No se pudo ejecutar TC-03 porque el item "${uniqueText}" nunca se creó.`,
+        `TC-03 could not be executed because the item "${uniqueText}" was never created.`,
       );
     }
   });

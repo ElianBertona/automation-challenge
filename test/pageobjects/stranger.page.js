@@ -47,7 +47,7 @@ class StrangerPage {
       async () => {
         return await this.isTextInList(text);
       },
-      { timeout: 10000, timeoutMsg: "El ítem no apareció" },
+      { timeout: 10000, timeoutMsg: "The item did not appear in the list" },
     );
   }
 
@@ -77,7 +77,7 @@ class StrangerPage {
         return text;
       }
     }
-    throw new Error("No hay otros ítems");
+    throw new Error("There are no other items");
   }
 
   async editItemBySpecificText(originalText, newText) {

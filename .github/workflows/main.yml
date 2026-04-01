@@ -1,0 +1,12 @@
+name: CI/CD Automation Challenge
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build and Run Tests with Docker
+        run: docker-compose up --build --exit-code-from automation-tests

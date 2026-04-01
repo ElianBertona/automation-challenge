@@ -1,0 +1,18 @@
+{
+  "name": "automation-challenge",
+  "version": "1.0.0",
+  "type": "module",
+"scripts": {
+    "test:desktop": "wdio run ./wdio.conf.js --capability 0",
+    "test:mobile": "wdio run ./wdio.conf.js --capability 1",
+    "test:all": "wdio run ./wdio.conf.js --maxInstances 1"
+},
+"devDependencies": {
+    "@wdio/cli": "^8.x.x",
+    "@wdio/local-runner": "^8.x.x",
+    "@wdio/mocha-framework": "^8.x.x",
+    "@wdio/spec-reporter": "^8.x.x",
+    "chromedriver": "^x.x.x",
+    "wdio-chromedriver-service": "^x.x.x"
+}
+}

@@ -1,0 +1,8 @@
+services:
+  automation-tests:
+    build: .
+    shm_size: '2gb'
+    volumes:
+      - .:/app
+      - /app/node_modules
+      

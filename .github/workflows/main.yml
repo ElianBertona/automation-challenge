@@ -37,11 +37,11 @@ jobs:
           if-no-files-found: warn
           retention-days: 5
   
-      - name: Test Report Check
+      - name: E2E Detailed Results
         uses: dorny/test-reporter@v1
         if: always()
         with:
-          name: "E2E Detailed Results"
+          name: "E2E Details: Desktop vs Mobile"
           path: reports/*.xml
           reporter: java-junit    
 
@@ -60,12 +60,12 @@ jobs:
           echo "|----------|----------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
           
           for file in reports/*.xml; do
-            if [[ $file == *"results-0-0.xml"* ]]; then
+            if [[ $file == *"Desktop"* ]]; then
               PLATFORM="💻 Desktop"
             else
               PLATFORM="📱 Mobile"
             fi
-            
+          
             grep "<testcase " "$file" | while read -r line; do
               NAME=$(echo $line | sed -E 's/.*name="([^"]*)".*/\1/')
               TIME=$(echo $line | sed -E 's/.*time="([^"]*)".*/\1/')

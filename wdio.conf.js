@@ -40,19 +40,13 @@ export const config = {
   reporters: [
         'spec', 
         ['junit', {
-            outputDir: './reports',
-            outputFileFormat: function(options) {
-                return `results-${options.cid}.xml`
-            },
-            suiteNameFormat: /[^/]+$/, 
-            packageName: options => {
-                const isMobile = options.capabilities['goog:chromeOptions']?.mobileEmulation;
-                return isMobile ? 'Mobile_Chrome' : 'Desktop_Chrome';
-            },
-            errorOptions: {
-            displayStacktrace: true 
+        outputDir: './reports',
+        outputFileFormat: function(options) {
+            // Esto creará nombres claros: results-Desktop.xml o results-Mobile.xml
+            const platform = options.capabilities['goog:chromeOptions']?.mobileEmulation ? 'Mobile' : 'Desktop';
+            return `results-${platform}.xml`
         }
-        }]
+    }]
     ],
   // ===================
   // Test Configurations

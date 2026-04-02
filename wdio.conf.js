@@ -68,18 +68,15 @@ export const config = {
   // =====
   afterTest: async function(test, context, { error, result, duration, passed, retries }) {
         if (!passed) {
-            // Creamos el nombre del archivo basado en el nombre del test
             const timestamp = new Date().toISOString().replace(/:/g, '-');
             const filepath = `./errorShots/screenshot_${test.title.replace(/\s+/g, '_')}_${timestamp}.png`;
             
-            // Tomamos la captura
             await browser.saveScreenshot(filepath);
             console.log(`--- Screenshot taken on failure: ${filepath} ---`);
         }
     },
     onComplete: function(exitCode, config, capabilities, results) {
         console.log('--- Tests Completed. Finalizing reports... ---');
-        // Pequeña pausa técnica para que el sistema operativo guarde los archivos
         return new Promise(resolve => setTimeout(resolve, 3000)); 
     },
 };

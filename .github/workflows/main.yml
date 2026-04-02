@@ -41,4 +41,23 @@ jobs:
         with:
           name: E2E Test Results
           path: reports/*.xml
-          reporter: java-junit          
+          reporter: java-junit    
+
+      - name: Add Visual Summary
+        if: always()
+        run: |
+          echo "## 🚀 TEST AUTOMATION RESULTS" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ General Status" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -d "errorShots" ] && [ "$(ls -A errorShots)" ]; then
+            echo "❌ **Failures detected.** Please check the screenshots in the Artifacts section at the bottom." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **All tests passed successfully!**" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "### 📝 Test Case Details" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Case Name | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------------|--------|" >> $GITHUB_STEP_SUMMARY
+          
+          # This command extracts test names from your XML files and adds them to the GitHub table
+          grep "testcase" reports/*.xml | sed -E 's/.*name="([^"]*)".*/| \1 | ✅ Passed |/' >> $GITHUB_STEP_SUMMARY

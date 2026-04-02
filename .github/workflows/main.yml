@@ -46,8 +46,8 @@ jobs:
       - name: Add Visual Summary
         if: always()
         run: |
-          echo "## 🚀 TEST AUTOMATION RESULTS" >> $GITHUB_STEP_SUMMARY
-          echo "### ✅ General Status" >> $GITHUB_STEP_SUMMARY
+          echo "## TEST AUTOMATION RESULTS" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Execution Overview" >> $GITHUB_STEP_SUMMARY
           
           if [ -d "errorShots" ] && [ "$(ls -A errorShots)" ]; then
             echo "❌ **Failures detected.** Please check the screenshots in the Artifacts section at the bottom." >> $GITHUB_STEP_SUMMARY
@@ -56,8 +56,19 @@ jobs:
           fi
           
           echo "### 📝 Test Case Details" >> $GITHUB_STEP_SUMMARY
-          echo "| Test Case Name | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Test Case Name | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|----------------|--------|" >> $GITHUB_STEP_SUMMARY
           
-          # This command extracts test names from your XML files and adds them to the GitHub table
-          grep "testcase" reports/*.xml | sed -E 's/.*name="([^"]*)".*/| \1 | ✅ Passed |/' >> $GITHUB_STEP_SUMMARY
+          # Loop through each XML file to build the rows
+          for file in reports/*.xml; do
+            # Determine platform by checking filename or content
+            if [[ $file == *"0-1"* ]] || grep -qi "mobile" "$file"; then
+              PLATFORM="📱 Mobile"
+            else
+              PLATFORM="💻 Desktop"
+            fi
+            
+            # Extract ONLY the testcase names and format them as table rows
+            # This avoids printing filenames or suite headers
+            grep "<testcase " "$file" | sed -E "s/.*name=\"([^\"]*)\".*/| $PLATFORM | \1 | ✅ Passed |/" >> $GITHUB_STEP_SUMMARY
+          done

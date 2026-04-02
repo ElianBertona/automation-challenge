@@ -19,7 +19,7 @@ jobs:
 
       - name: Run Automated Tests (Docker Compose)
         run: |
-          docker-compose up --build --exit-code-from automation-tests
+              docker compose up --build --exit-code-from automation-tests
 
       - name: Upload Test Results
         if: always()

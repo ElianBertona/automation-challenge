@@ -9,8 +9,8 @@ permissions:
     checks: write        
 
 jobs:
-  automation-suite:  # This is your ONLY job ID
-    name: "Strangerlist Suite: Desktop & Mobile" # This is the name that shows in the sidebar
+  automation-suite:
+    name: "Strangerlist Suite: Desktop & Mobile"
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -41,33 +41,31 @@ jobs:
         uses: dorny/test-reporter@v1
         if: always()
         with:
-          name: E2E Detailed Results  # This will appear as a sub-check
+          name: "E2E Detailed Results"
           path: reports/*.xml
           reporter: java-junit    
-
-      - name: E2E Detailed Results
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: "E2E Results: Desktop vs Mobile"
-          path: reports/*.xml
-          reporter: java-junit
 
       - name: Add Visual Summary
         if: always()
         run: |
           echo "## TEST AUTOMATION RESULTS" >> $GITHUB_STEP_SUMMARY
           
+          if [ -d "errorShots" ] && [ "$(ls -A errorShots)" ]; then
+            echo "### ❌ Status: FAILURES DETECTED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ✅ Status: ALL PASSED" >> $GITHUB_STEP_SUMMARY
+          fi
+          
           echo "| Platform | Test Case Name | Duration | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|----------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
           
           for file in reports/*.xml; do
-            if [[ $file == *"0-0"* ]]; then
+            if [[ $file == *"results-0-0.xml"* ]]; then
               PLATFORM="💻 Desktop"
             else
               PLATFORM="📱 Mobile"
             fi
-          
+            
             grep "<testcase " "$file" | while read -r line; do
               NAME=$(echo $line | sed -E 's/.*name="([^"]*)".*/\1/')
               TIME=$(echo $line | sed -E 's/.*time="([^"]*)".*/\1/')

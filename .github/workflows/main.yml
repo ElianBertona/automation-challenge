@@ -27,8 +27,8 @@ jobs:
         with:
           name: webdriverio-reports
           path: |
-            reports/*.json
-            errorShots/*.png
+            reports/
+            errorShots/
           if-no-files-found: warn
           retention-days: 5
   

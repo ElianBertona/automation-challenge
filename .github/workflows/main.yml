@@ -48,7 +48,7 @@ jobs:
       - name: Add Visual Summary
         if: always()
         run: |
-          echo "## 🚀 TEST AUTOMATION RESULTS" >> $GITHUB_STEP_SUMMARY
+          echo "## TEST AUTOMATION RESULTS" >> $GITHUB_STEP_SUMMARY
           
           if [ -d "errorShots" ] && [ "$(ls -A errorShots)" ]; then
             echo "### ❌ Status: FAILURES DETECTED" >> $GITHUB_STEP_SUMMARY
@@ -61,12 +61,12 @@ jobs:
           echo "|----------|----------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
           
           for file in reports/*.xml; do
-            if [[ $file == *"0-0"* ]]; then
+            if [[ $file == *"results-0-0.xml"* ]]; then
               PLATFORM="💻 Desktop"
             else
               PLATFORM="📱 Mobile"
             fi
-            
+          
             grep "<testcase " "$file" | while read -r line; do
               NAME=$(echo $line | sed -E 's/.*name="([^"]*)".*/\1/')
               TIME=$(echo $line | sed -E 's/.*time="([^"]*)".*/\1/')

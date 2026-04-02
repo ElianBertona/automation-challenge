@@ -9,10 +9,12 @@ permissions:
     checks: write        
 
 jobs:
-  automation-suite:
+  automation-suite:  # This is your ONLY job ID
+    name: "Strangerlist Suite: Desktop & Mobile" # This is the name that shows in the sidebar
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -39,36 +41,35 @@ jobs:
         uses: dorny/test-reporter@v1
         if: always()
         with:
-          name: E2E Test Results
+          name: E2E Detailed Results  # This will appear as a sub-check
           path: reports/*.xml
           reporter: java-junit    
 
       - name: Add Visual Summary
         if: always()
         run: |
-          echo "## TEST AUTOMATION RESULTS" >> $GITHUB_STEP_SUMMARY
-          echo "### ✅ Execution Overview" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 TEST AUTOMATION RESULTS" >> $GITHUB_STEP_SUMMARY
           
           if [ -d "errorShots" ] && [ "$(ls -A errorShots)" ]; then
-            echo "❌ **Failures detected.** Please check the screenshots in the Artifacts section at the bottom." >> $GITHUB_STEP_SUMMARY
+            echo "### ❌ Status: FAILURES DETECTED" >> $GITHUB_STEP_SUMMARY
           else
-            echo "✅ **All tests passed successfully!**" >> $GITHUB_STEP_SUMMARY
+            echo "### ✅ Status: ALL PASSED" >> $GITHUB_STEP_SUMMARY
           fi
           
           echo "### 📝 Test Case Details" >> $GITHUB_STEP_SUMMARY
-          echo "| Platform | Test Case Name | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------|----------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Test Case Name | Duration | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|----------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
           
-          # Loop through each XML file to build the rows
           for file in reports/*.xml; do
-            # Determine platform by checking filename or content
-            if [[ $file == *"0-1"* ]] || grep -qi "mobile" "$file"; then
-              PLATFORM="📱 Mobile"
-            else
+            if [[ $file == *"0-0"* ]]; then
               PLATFORM="💻 Desktop"
+            else
+              PLATFORM="📱 Mobile"
             fi
             
-            # Extract ONLY the testcase names and format them as table rows
-            # This avoids printing filenames or suite headers
-            grep "<testcase " "$file" | sed -E "s/.*name=\"([^\"]*)\".*/| $PLATFORM | \1 | ✅ Passed |/" >> $GITHUB_STEP_SUMMARY
+            grep "<testcase " "$file" | while read -r line; do
+              NAME=$(echo $line | sed -E 's/.*name="([^"]*)".*/\1/')
+              TIME=$(echo $line | sed -E 's/.*time="([^"]*)".*/\1/')
+              echo "| $PLATFORM | $NAME | ${TIME}s | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+            done
           done

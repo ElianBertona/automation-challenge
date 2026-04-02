@@ -44,6 +44,11 @@ export const config = {
             outputFileFormat: function(options) {
                 return `results-${options.cid}.xml`
             },
+            suiteNameFormat: /[^/]+$/, 
+            packageName: options => {
+                const isMobile = options.capabilities['goog:chromeOptions']?.mobileEmulation;
+                return isMobile ? 'Mobile_Chrome' : 'Desktop_Chrome';
+            },
             errorOptions: {
             displayStacktrace: true 
         }

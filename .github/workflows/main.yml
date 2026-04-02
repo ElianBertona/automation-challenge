@@ -27,7 +27,15 @@ jobs:
         with:
           name: webdriverio-reports
           path: |
-            reports/
-            errorShots/
+            reports/*.json
+            errorShots/*.png
           if-no-files-found: warn
           retention-days: 5
+  
+      - name: Test Report Check
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: E2E Test Results
+          path: reports/*.xml
+          reporter: java-junit          

@@ -5,5 +5,5 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
-      - ./reports:/app/reports      
+      - ./reports:/app/reports        
       - ./errorShots:/app/errorShots

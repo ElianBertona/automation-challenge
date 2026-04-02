@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
+RUN mkdir -p reports errorShots && chmod 777 reports errorShots
 COPY . .
 
 CMD ["npx", "wdio", "run", "./wdio.conf.js"]

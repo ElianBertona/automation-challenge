@@ -43,20 +43,22 @@ export const config = {
             outputDir: './reports',
             outputFileFormat: function(options) {
                 return `results-${options.cid}.xml`
-            }
+            },
+            errorOptions: {
+            displayStacktrace: true 
+        }
         }]
     ],
   // ===================
   // Test Configurations
   // ===================
-  logLevel: "info",
+  logLevel: "debug",
   bail: 0,
   baseUrl: "http://immense-hollows-74271.herokuapp.com/",
   waitforTimeout: 10000,
   connectionRetryTimeout: 120000,
   connectionRetryCount: 3,
   framework: "mocha",
-  reporters: ["spec"],
   mochaOpts: {
     ui: "bdd",
     timeout: 60000,
@@ -74,5 +76,10 @@ export const config = {
             await browser.saveScreenshot(filepath);
             console.log(`--- Screenshot taken on failure: ${filepath} ---`);
         }
+    },
+    onComplete: function(exitCode, config, capabilities, results) {
+        console.log('--- Tests Completed. Finalizing reports... ---');
+        // Pequeña pausa técnica para que el sistema operativo guarde los archivos
+        return new Promise(resolve => setTimeout(resolve, 3000)); 
     },
 };

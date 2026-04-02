@@ -38,7 +38,7 @@ export const config = {
     },
   ],
   reporters: [
-        'spec', // Sigues viendo los resultados en consola
+        'spec', 
         ['junit', {
             outputDir: './reports',
             outputFileFormat: function(options) {

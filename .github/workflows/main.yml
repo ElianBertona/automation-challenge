@@ -29,4 +29,5 @@ jobs:
           path: |
             reports/
             errorShots/
+          if-no-files-found: warn
           retention-days: 5

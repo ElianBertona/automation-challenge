@@ -37,6 +37,15 @@ export const config = {
       },
     },
   ],
+  reporters: [
+        'spec', // Sigues viendo los resultados en consola
+        ['junit', {
+            outputDir: './reports',
+            outputFileFormat: function(options) {
+                return `results-${options.cid}.xml`
+            }
+        }]
+    ],
   // ===================
   // Test Configurations
   // ===================

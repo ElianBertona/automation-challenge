@@ -45,23 +45,24 @@ jobs:
           path: reports/*.xml
           reporter: java-junit    
 
+      - name: E2E Detailed Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: "E2E Results: Desktop vs Mobile"
+          path: reports/*.xml
+          reporter: java-junit
+
       - name: Add Visual Summary
         if: always()
         run: |
           echo "## TEST AUTOMATION RESULTS" >> $GITHUB_STEP_SUMMARY
           
-          if [ -d "errorShots" ] && [ "$(ls -A errorShots)" ]; then
-            echo "### ❌ Status: FAILURES DETECTED" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "### ✅ Status: ALL PASSED" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          echo "### 📝 Test Case Details" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | Test Case Name | Duration | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|----------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
           
           for file in reports/*.xml; do
-            if [[ $file == *"results-0-0.xml"* ]]; then
+            if [[ $file == *"0-0"* ]]; then
               PLATFORM="💻 Desktop"
             else
               PLATFORM="📱 Mobile"

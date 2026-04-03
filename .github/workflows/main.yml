@@ -61,20 +61,21 @@ jobs:
           echo "## Execution Details" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | Test Case Name | Duration | Status |" >> $GITHUB_STEP_SUMMARY
           echo "| :--- | :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-          
-          for file in reports/*.xml; do
-            PLATFORM=$(basename "$file" | sed 's/results-//;s/.xml//')
-            while read -r line; do
-              if [[ "$line" =~ "<testcase" ]]; then
-                NAME=$(echo "$line" | sed -E 's/.*name="([^"]*)".*/\1/')
-                TIME=$(echo "$line" | sed -E 's/.*time="([^"]*)".*/\1/')
-               
-                if [[ "$line" != *"/>"* ]]; then
-                   STATUS="❌ Failed"
-                else
-                   STATUS="✅ Passed"
-                fi
-                echo "| $PLATFORM | $NAME | ${TIME}s | $STATUS |" >> $GITHUB_STEP_SUMMARY
-              fi
-            done < "$file"
-          done
+          python3 -c "
+          import xml.etree.ElementTree as ET
+          import os
+
+          for file in sorted(os.listdir('reports')):
+              if file.endswith('.xml'):
+                  platform = file.replace('results-', '').replace('.xml', '')
+                  tree = ET.parse(f'reports/{file}')
+                  root = tree.getroot()
+                  suites = root.findall('.//testsuite') if root.tag == 'testsuites' else [root]
+                  for suite in suites:
+                      for tc in suite.findall('testcase'):
+                          name = tc.get('name')
+                          time = tc.get('time')
+                          failure = tc.find('failure')
+                          status = '❌ Failed' if failure is not None else '✅ Passed'
+                          print(f'| {platform} | {name} | {time}s | {status} |')
+          " >> $GITHUB_STEP_SUMMARY

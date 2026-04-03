@@ -8,16 +8,39 @@ permissions:
     contents: read
     checks: write        
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true   
+
 jobs:
   automation-suite:
     name: "Strangerlist Test Suite"
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        timeout-minutes: 15
+
+      - name: Cache Node.js modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -79,3 +102,10 @@ jobs:
                           status = '❌ Failed' if failure is not None else '✅ Passed'
                           print(f'| {platform} | {name} | {time}s | {status} |')
           " >> $GITHUB_STEP_SUMMARY
+
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "### Execution Metadata" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit ID:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run Link:** [View Job Details](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY

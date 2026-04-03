@@ -30,41 +30,45 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: webdriverio-reports
+          name: test-reports-and-screenshots
           path: |
             reports/
             errorShots/
-          if-no-files-found: warn
+          if-no-files-found: ignore
           retention-days: 5
   
       - name: Generate Report Summary
         uses: dorny/test-reporter@v1
         if: always()
         with:
-          name: "Details Results: Desktop & Mobile"
+          name: "Detailed Test Results: Desktop & Mobile"
           path: reports/*.xml
           reporter: java-junit    
 
       - name: Add Visual Summary
         if: always()
         run: |
-          echo "## TEST AUTOMATION RESULTS" >> $GITHUB_STEP_SUMMARY
+          echo "# TEST AUTOMATION RESULTS" >> $GITHUB_STEP_SUMMARY
           
+          # Check if there are failures by looking at errorShots folder
           if [ -d "errorShots" ] && [ "$(ls -A errorShots)" ]; then
             echo "### ❌ Status: FAILURES DETECTED" >> $GITHUB_STEP_SUMMARY
-            echo "Review the screenshots in the **Artifacts** section at the bottom of this page." >> $GITHUB_STEP_SUMMARY
+            echo "> **Note:** You can download the screenshots from the **Artifacts** section at the bottom of this page." >> $GITHUB_STEP_SUMMARY
           else
             echo "### ✅ Status: ALL PASSED" >> $GITHUB_STEP_SUMMARY
           fi
           
+          echo "## Execution Details" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | Test Case Name | Duration | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------|----------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
           
           for file in reports/*.xml; do
             PLATFORM=$(basename "$file" | sed 's/results-//;s/.xml//')
+      
             grep -e "<testcase" "$file" | while read -r line; do
               NAME=$(echo $line | sed -E 's/.*name="([^"]*)".*/\1/')
               TIME=$(echo $line | sed -E 's/.*time="([^"]*)".*/\1/')
+              
               if [[ "$line" != *"/>"* ]]; then
                 STATUS="❌ Failed"
               else

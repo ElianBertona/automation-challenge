@@ -79,8 +79,9 @@ export const config = {
     { error, result, duration, passed, retries },
   ) {
     if (!passed) {
-      const timestamp = new Date().toISOString().replace(/:/g, "-");
-      const fileName = `screenshot_${test.title.replace(/\s+/g, "_")}_${timestamp}.png`;
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const cleanTitle = test.title.replace(/[^a-z0-9]/gi, "_");
+      const fileName = `screenshot_${cleanTitle}_${timestamp}.png`;
       await browser.saveScreenshot(`./errorShots/${fileName}`);
       console.log(`--- Screenshot taken on failure: ${filepath} ---`);
     }

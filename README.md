@@ -70,7 +70,7 @@ The following documents detail the testing strategy, requirements coverage, and 
 * **[Test Plan](./docs/TEST_PLAN.md):** Overall strategy, scope, environment matrix, and risk mitigation.
 * **[Use Cases](./docs/USE_CASES.md):** Formal functional requirements and acceptance criteria.
 * **[Test Cases](./docs/TEST_CASES.md):** Detailed test scenarios and their mapping to requirements.
-* **[Bug Reports](./BUGS.md):** Detailed report of identified defects with animated evidence (GIFs).
+* **[Bug Reports](./docs/BUGS.md):** Detailed report of identified defects with animated evidence (GIFs).
    
 ---
 

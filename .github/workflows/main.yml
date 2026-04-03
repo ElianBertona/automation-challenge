@@ -61,20 +61,17 @@ jobs:
           echo "|----------|----------------|----------|--------|" >> $GITHUB_STEP_SUMMARY
           
           for file in reports/*.xml; do
-            if [[ $file == *"Desktop"* ]]; then
-              PLATFORM="💻 Desktop"
-            else
-              PLATFORM="📱 Mobile"
-            fi
-          
-            grep "<testcase " "$file" | while read -r line; do
+            [[ $file == *"Desktop"* ]] && PLATFORM="💻 Desktop" || PLATFORM="📱 Mobile"
+            
+            grep -e "<testcase" "$file" | while read -r line; do
               NAME=$(echo $line | sed -E 's/.*name="([^"]*)".*/\1/')
               TIME=$(echo $line | sed -E 's/.*time="([^"]*)".*/\1/')
-              
-              if [[ $line == *"/>"* ]]; then
+              if echo "$line" | grep -q "<failure"; then
+                STATUS="❌ Failed"
+              elif [[ "$line" == *"/>"* ]]; then
                 STATUS="✅ Passed"
               else
-                STATUS="❌ Failed"
+                STATUS="✅ Passed"
               fi
               
               echo "| $PLATFORM | $NAME | ${TIME}s | $STATUS |" >> $GITHUB_STEP_SUMMARY

@@ -51,7 +51,9 @@ export const config = {
   // ===================
   // Test Configurations
   // ===================
-  logLevel: "debug",
+  logLevel: "info",
+  coloredLogs: true,
+  screenshotPath: "./errorShots/",
   bail: 0,
   baseUrl: "http://immense-hollows-74271.herokuapp.com/",
   waitforTimeout: 10000,

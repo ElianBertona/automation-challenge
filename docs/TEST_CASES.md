@@ -14,15 +14,15 @@ This document presents the detailed **Test Cases** designed for the Strangerlist
 
 ---
 
-##  Bug Verification Flow (Regression Path)
+## Bug Verification Flow (Regression Path)
 
-*These cases are designed to validate the fixes for the reported defects. If the issues are fixed, these tests should **PASS**.*
+*These cases are designed to validate the fixes for the reported defects. If the issues are fixed, these test cases should **PASS**. Each case is linked to its detailed bug report for full traceability.*
 
 | Test Case ID | Bug / Issue Reference | Test Title | Execution Steps | Expected Result |
 | :--- | :--- | :--- | :--- | :--- |
-| **TC-06** | **[BUG-001](../../issues/1)** (Form Reset) | Verify form reset after creation | 1. Click "Choose File" and upload the `test.jpg` image.<br>2. In "Text" field, enter valid text.<br>3. Click "Create Item".<br>4. After the list refreshes, check the "Choose File" and "Text" fields. | All input fields must be empty. |
-| **TC-07** | **[BUG-002](../../issues/2)** (Image PUT) | Update image and text simultaneously | 1. Click "Edit" on an existing item.<br>2. Select a new image file and change the text.<br>3. Click "Update Item". | Both the image and the text should be updated in the list. |
-| **TC-08** | **[BUG-003](../../issues/3)** (Feedback) | Verify success message | 1. Perform any "Create" or "Edit" action.<br>2. Observe the top of the screen for notifications. | A clear success message (e.g., "Item Updated!") should be visible. |
+| **TC-06** | **[BUG-001](https://github.com/ElianBertona/automation-challenge/blob/main/docs/BUGS.md#1-bug-001-file-input-not-reset-after-successful-creation)** | Verify form reset after creation | 1. Click "Choose File" and upload the `test.jpg` image.<br>2. In "Text" field, enter valid text.<br>3. Click "Create Item".<br>4. After the list refreshes, check the "Choose File" input. | The "Choose File" input must be cleared (reset) and should not display the previous file name. |
+| **TC-07** | **[BUG-002](https://github.com/ElianBertona/automation-challenge/blob/main/docs/BUGS.md#2-bug-002-update-image-functionality-not-working)** | Update image and text simultaneously | 1. Click "Edit" on an existing item.<br>2. Select a new image file and modify the text description.<br>3. Click "Update Item". | Both the image and the text should be successfully updated in the list and persisted in the database. |
+| **TC-08** | **[BUG-003](https://github.com/ElianBertona/automation-challenge/blob/main/docs/BUGS.md#3-bug-003-missing-success-feedback-for-crud-operations)** | Verify success message feedback | 1. Perform any "Create" or "Edit" action.<br>2. Observe the UI immediately after clicking the submit button. | A clear success notification (e.g., "Item created!" or "Update successful!") should be displayed to the user. |
 
 ---
 

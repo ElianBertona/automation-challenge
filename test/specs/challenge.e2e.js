@@ -15,7 +15,7 @@ describe("Angular Strangerlist: Challenge Suite", () => {
     await StrangerPage.createItem(uniqueText, imagePath);
 
     const isFullyCreated = await StrangerPage.isItemFullyCreated(uniqueText);
-    expect(isFullyCreated).toBe(false);
+    expect(isFullyCreated).toBe(true);
   });
 
   it("TC-02: Edit another existing item", async () => {

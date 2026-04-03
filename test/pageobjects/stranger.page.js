@@ -5,7 +5,7 @@ class StrangerPage {
     return $("#inputImage");
   }
   get inputText() {
-    return $('textarea[name="text"]');
+    return $('textarea[name="text1234512345"]');
   }
   get btnCreate() {
     return $("button=Create Item");

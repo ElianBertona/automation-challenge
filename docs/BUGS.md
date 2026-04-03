@@ -77,5 +77,5 @@ The list refreshes, but no success notification is displayed to the user.
 ---
 
 ## Quality Assurance Notes
-* **UI/UX Standards:** Bug 3 is reported based on Jakob Nielsen’s Heuristics regarding "Visibility of system status."
+* **UI/UX Standards:** Bug 3 is reported as a violation of the "Visibility of System Status" principle. A professional application must always keep the user informed about the outcome of their actions through immediate visual feedback.
 * **Test Environment:** All defects were verified using the production Heroku environment and emulated mobile devices.

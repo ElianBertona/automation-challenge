@@ -110,14 +110,30 @@ Then use the scripts configured in **package.json**:
 ## Project Structure
 
 ```
+AUTOMATION-CHALLENGE/
+├── .github/workflows/
+│   └── main.yml               # CI/CD Pipeline configuration for GitHub Actions
+├── assets/
+│   └── test.jpg               # Image asset used for file upload testing
+├── docs/
+│   ├── evidence/              # Animated GIF evidence for reported defects
+│   │   ├── bug_1.gif
+│   │   ├── bug_2.gif
+│   │   └── bug_3.gif
+│   ├── BUGS.md                # Detailed Bug Reports and defect documentation
+│   ├── TEST_CASES.md          # Traceability Matrix and step-by-step test scenarios
+│   ├── TEST_PLAN.md           # Master Test Plan for the Release v1.0
+│   └── USE_CASES.md           # Formal Functional Use Cases (Create, Edit, Delete)
+├── errorShots/                # Automated screenshots captured on test failure
+├── reports/                   # JUnit/Spec XML execution reports
 ├── test/
-│   ├── specs/
-│   │   └── challenge.e2e.js          Test case definitions
-│   └── pageobjects/
-│       └── stranger.page.js           UI abstraction and action methods
-├── assets/                            Static resources (upload images)
-├── wdio.conf.js                       Framework configuration & services
-├── Dockerfile                         Container definition
-├── docker-compose.yml                 Infrastructure as Code (IaC)
-└── package.json                       Dependencies & scripts
+│   ├── pageobjects/
+│   │   └── stranger.page.js   # Page Object Model (POM) abstraction layer
+│   └── specs/
+│       └── challenge.e2e.js   # End-to-End test suite definitions
+├── docker-compose.yml         # Docker orchestration for headless execution
+├── Dockerfile                 # Docker image configuration for the test environment
+├── package.json               # Node.js dependencies and custom execution scripts
+├── README.md                  # Main project documentation and setup instructions
+└── wdio.conf.js               # WebdriverIO framework configuration settings
 ```

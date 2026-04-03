@@ -4,7 +4,7 @@ import path from "path";
 describe("Angular Strangerlist: Challenge Suite", () => {
   const uniqueText = `User Story ${Date.now()}`;
   const updatedText = `Updated Story ${Date.now()}`;
-  const imagePath = path.join(process.cwd(), "assets", "test.jpg");
+  const imagePath = path.join(process.cwd(), "assets", "image.jpg");
   let otherItemText = "";
 
   beforeEach(async () => {

@@ -32,18 +32,10 @@ class StrangerPage {
     return row.$("button=Edit");
   }
 
-  escapeXPathString(str) {
-    if (!str.includes("'")) return `'${str}'`;
-    if (!str.includes('"')) return `"${str}"`;
-    return `concat('${str.replace(/'/g, "', \"'\", '")}')`;
-  }
-
   async open() {
     await browser.url("/");
-    await this.itemsCountLabel.waitForDisplayed({
-      timeout: 20000,
-      timeoutMsg: "Page did not load within 20s",
-    });
+    await this.itemsCountLabel.waitForDisplayed({ timeout: 20000, 
+        timeoutMsg: "Page did not load within 20s" });
   }
 
   async createItem(text, filePath) {
@@ -61,8 +53,7 @@ class StrangerPage {
   }
 
   async clickDeleteForText(text) {
-    const safeText = this.escapeXPathString(text);
-    const row = await $(`//p[text()="${safeText}"]/ancestor::li`);
+    const row = await $(`//p[text()="${text}"]/ancestor::li`);
     await row.scrollIntoView();
     const deleteBtn = await this.btnDeleteInRow(row);
     await deleteBtn.waitForClickable();
@@ -73,8 +64,7 @@ class StrangerPage {
     await this.modalContainer.waitForDisplayed();
     await this.btnConfirmDelete.click();
 
-    const safeText = this.escapeXPathString(textThatShouldLeave);
-    const element = await $(`//p[text()="${safeText}"]`);
+    const element = await $(`//p[text()="${textThatShouldLeave}"]`);
     await element.waitForExist({ reverse: true, timeout: 8000 });
   }
 
@@ -92,8 +82,7 @@ class StrangerPage {
   }
 
   async editItemBySpecificText(originalText, newText) {
-    const safeOriginalText = this.escapeXPathString(originalText);
-    const row = await $(`//p[text()="${safeOriginalText}"]/ancestor::li`);
+    const row = await $(`//p[text()="${originalText}"]/ancestor::li`);
     await row.scrollIntoView();
     const editBtn = await this.btnEditInRow(row);
 
@@ -109,14 +98,12 @@ class StrangerPage {
   }
 
   async isTextInList(text) {
-    const safeText = this.escapeXPathString(text);
-    const element = await $(`//p[text()="${safeText}"]`);
+    const element = await $(`//p[text()="${text}"]`);
     return await element.isDisplayed().catch(() => false);
   }
 
   async isItemFullyCreated(text) {
-    const safeText = this.escapeXPathString(text);
-    const row = await $(`//p[text()="${safeText}"]/ancestor::li`);
+    const row = await $(`//p[text()="${text}"]/ancestor::li`);
     const image = await row.$("img");
 
     const isTextDisplayed = await row.isDisplayed();

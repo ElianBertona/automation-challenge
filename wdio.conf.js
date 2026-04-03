@@ -38,16 +38,22 @@ export const config = {
     },
   ],
   reporters: [
-        'spec', 
-        ['junit', {
-        outputDir: './reports',
-        outputFileFormat: function(options) {
-            // Esto creará nombres claros: results-Desktop.xml o results-Mobile.xml
-            const platform = options.capabilities['goog:chromeOptions']?.mobileEmulation ? 'Mobile' : 'Desktop';
-            return `results-${platform}.xml`
-        }
-    }]
+    "spec",
+    [
+      "junit",
+      {
+        outputDir: "./reports",
+        outputFileFormat: function (options) {
+          // Esto creará nombres claros: results-Desktop.xml o results-Mobile.xml
+          const platform = options.capabilities["goog:chromeOptions"]
+            ?.mobileEmulation
+            ? "Mobile"
+            : "Desktop";
+          return `results-${platform}.xml`;
+        },
+      },
     ],
+  ],
   // ===================
   // Test Configurations
   // ===================
@@ -67,17 +73,20 @@ export const config = {
   // =====
   // Hooks
   // =====
-  afterTest: async function(test, context, { error, result, duration, passed, retries }) {
-        if (!passed) {
-            const timestamp = new Date().toISOString().replace(/:/g, '-');
-            const filepath = `./errorShots/screenshot_${test.title.replace(/\s+/g, '_')}_${timestamp}.png`;
-            
-            await browser.saveScreenshot(filepath);
-            console.log(`--- Screenshot taken on failure: ${filepath} ---`);
-        }
-    },
-    onComplete: function(exitCode, config, capabilities, results) {
-        console.log('--- Tests Completed. Finalizing reports... ---');
-        return new Promise(resolve => setTimeout(resolve, 3000)); 
-    },
+  afterTest: async function (
+    test,
+    context,
+    { error, result, duration, passed, retries },
+  ) {
+    if (!passed) {
+      const timestamp = new Date().toISOString().replace(/:/g, "-");
+      const fileName = `screenshot_${test.title.replace(/\s+/g, "_")}_${timestamp}.png`;
+      await browser.saveScreenshot(`./errorShots/${fileName}`);
+      console.log(`--- Screenshot taken on failure: ${filepath} ---`);
+    }
+  },
+  onComplete: function (exitCode, config, capabilities, results) {
+    console.log("--- Tests Completed. Finalizing reports... ---");
+    return new Promise((resolve) => setTimeout(resolve, 3000));
+  },
 };

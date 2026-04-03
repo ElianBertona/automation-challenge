@@ -1,3 +1,5 @@
+[![End-to-End Tests (Strangerlist)](https://github.com/ElianBertona/automation-challenge/actions/workflows/main.yml/badge.svg)](https://github.com/ElianBertona/automation-challenge/actions/workflows/main.yml)
+
 # Angular Strangerlist Automation Challenge
 
 ## Overview
@@ -40,7 +42,24 @@ The framework validates user experience across two critical profiles:
 - **Desktop** — 1920x1080 resolution
 - **Mobile** — iPhone X emulation for list and form responsiveness
 
----
+## Reporting & Continuous Integration
+
+This project uses **GitHub Actions** for Continuous Testing.
+- **Visual Dashboards:** Each execution generates a dynamic summary table directly in the GitHub Actions UI.
+- **Cross-Platform Visualization:** Results are clearly labeled as **💻 Desktop** or **📱 Mobile**.
+- **Evidence Collection:** If a test fails, screenshots and JUnit XML reports are automatically uploaded as job artifacts.
+
+## Continuous Integration (CI) - No Setup Required
+
+The easiest way to review the execution results is directly through **GitHub Actions**. You don't need to install Node.js or Docker locally to verify the project's status.
+
+1. Go to the [**Actions**](https://github.com/ElianBertona/automation-challenge/actions) tab in this repository.
+2. Select the most recent run (e.g., "fix main #20").
+3. In the **Summary** section, you will find a **Visual Dashboard** with:
+   - **Multi-platform results** (Desktop vs. Mobile).
+   - **Execution time** per test case.
+   - **Success/Failure status** with emojis for quick scanning.
+4. If a test fails, you can find the **Screenshots** in the "Artifacts" section at the bottom of the page.
 
 ## Prerequisites
 

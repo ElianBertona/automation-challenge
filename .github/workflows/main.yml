@@ -1,4 +1,4 @@
-name: End-to-End Tests (Strangerlist)
+name: End-to-End Tests
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   automation-suite:
-    name: "Strangerlist Suite: Desktop & Mobile"
+    name: "Strangerlist Test Suite"
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -37,11 +37,11 @@ jobs:
           if-no-files-found: warn
           retention-days: 5
   
-      - name: E2E Detailed Results
+      - name: Generate Report Summary
         uses: dorny/test-reporter@v1
         if: always()
         with:
-          name: "E2E Details: Desktop vs Mobile"
+          name: "Details Results: Desktop & Mobile"
           path: reports/*.xml
           reporter: java-junit    
 
@@ -52,6 +52,7 @@ jobs:
           
           if [ -d "errorShots" ] && [ "$(ls -A errorShots)" ]; then
             echo "### ❌ Status: FAILURES DETECTED" >> $GITHUB_STEP_SUMMARY
+            echo "Review the screenshots in the **Artifacts** section at the bottom of this page." >> $GITHUB_STEP_SUMMARY
           else
             echo "### ✅ Status: ALL PASSED" >> $GITHUB_STEP_SUMMARY
           fi
@@ -69,6 +70,13 @@ jobs:
             grep "<testcase " "$file" | while read -r line; do
               NAME=$(echo $line | sed -E 's/.*name="([^"]*)".*/\1/')
               TIME=$(echo $line | sed -E 's/.*time="([^"]*)".*/\1/')
-              echo "| $PLATFORM | $NAME | ${TIME}s | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+              
+              if [[ $line == *"/>"* ]]; then
+                STATUS="✅ Passed"
+              else
+                STATUS="❌ Failed"
+              fi
+              
+              echo "| $PLATFORM | $NAME | ${TIME}s | $STATUS |" >> $GITHUB_STEP_SUMMARY
             done
           done

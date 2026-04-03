@@ -25,7 +25,7 @@ All form fields (both text and file input) should be reset to their default empt
 The "Text" field is reset, but the file input still displays the name of the uploaded image.
 
 ### **Evidence**
-![Bug 1 Evidence](./evidence/bug_1.gif
+![Bug 1 Evidence](./evidence/bug_1.gif)
 
 ---
 

@@ -25,7 +25,7 @@ All form fields (both text and file input) should be reset to their default empt
 The "Text" field is reset, but the file input still displays the name of the uploaded image.
 
 ### **Evidence**
-![Bug 1 Evidence](./evidence/Bug_1.gif)
+![Bug 1 Evidence](./evidence/bug_1.gif
 
 ---
 
@@ -50,7 +50,7 @@ The system should update both the text description and the associated image file
 Only the text is updated. The item still displays the old image, failing to update the binary/reference data.
 
 ### **Evidence**
-![Bug 2 Evidence](./evidence/Bug_2.gif)
+![Bug 2 Evidence](./evidence/bug_2.gif)
 
 ---
 
@@ -72,7 +72,7 @@ A clear success message (e.g., "Item created successfully!" or "Changes saved!")
 The list refreshes, but no success notification is displayed to the user.
 
 ### **Evidence**
-![Bug 3 Evidence](./evidence/Bug_3.gif)
+![Bug 3 Evidence](./evidence/bug_3.gif)
 
 ---
 

@@ -61,6 +61,19 @@ The easiest way to review the execution results is directly through **GitHub Act
    - **Success/Failure status** with emojis for quick scanning.
 4. If a test fails, you can find the **Screenshots** in the "Artifacts" section at the bottom of the page.
 
+---
+
+## Quality Assurance Documentation
+
+The following documents detail the testing strategy, requirements coverage, and identified defects:
+
+* **[Test Plan](./docs/TEST_PLAN.md):** Overall strategy, scope, environment matrix, and risk mitigation.
+* **[Use Cases](./docs/USE_CASES.md):** Formal functional requirements and acceptance criteria.
+* **[Test Cases](./docs/TEST_CASES.md):** Detailed test scenarios and their mapping to requirements.
+* **[Bug Reports](./BUGS.md):** Detailed report of identified defects with animated evidence (GIFs).
+   
+---
+
 ## Prerequisites
 
 - ✓ Docker Desktop installed and running

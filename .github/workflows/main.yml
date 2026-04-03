@@ -62,11 +62,9 @@ jobs:
           
           for file in reports/*.xml; do
             PLATFORM=$(basename "$file" | sed 's/results-//;s/.xml//')
-            # Extraemos los casos de prueba y verificamos si tienen la etiqueta <failure>
             grep -e "<testcase" "$file" | while read -r line; do
               NAME=$(echo $line | sed -E 's/.*name="([^"]*)".*/\1/')
               TIME=$(echo $line | sed -E 's/.*time="([^"]*)".*/\1/')
-              # Si la línea NO termina en '/>', significa que tiene un hijo (probablemente <failure>)
               if [[ "$line" != *"/>"* ]]; then
                 STATUS="❌ Failed"
               else

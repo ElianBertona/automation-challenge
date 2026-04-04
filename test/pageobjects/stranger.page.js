@@ -34,8 +34,10 @@ class StrangerPage {
 
   async open() {
     await browser.url("/");
-    await this.itemsCountLabel.waitForDisplayed({ timeout: 20000, 
-        timeoutMsg: "Page did not load within 20s" });
+    await this.itemsCountLabel.waitForDisplayed({
+      timeout: 20000,
+      timeoutMsg: "Page did not load within 20s",
+    });
   }
 
   async createItem(text, filePath) {

@@ -41,6 +41,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        
+      - name: Check Formatting (Prettier)
+        run: npx prettier --check .
+      
+      - name: Security Scan (Audit)
+        run: npm audit || true
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

@@ -15,6 +15,7 @@ To ensure test reliability in a concurrent execution environment and against an 
 ### 1. Design Pattern: Page Object Model (POM)
 
 We implemented a decoupled architecture where:
+
 - **Test logic** resides in specs
 - **UI interaction** lives in pageobjects
 - **Centralized dynamic selectors** allow locating elements (Edit/Delete buttons) within a specific list item context
@@ -23,6 +24,7 @@ We implemented a decoupled architecture where:
 ### 2. Unique Data Strategy
 
 Since the application allows items with duplicate names:
+
 - The framework generates unique identifiers based on **Date.now()**
 - Each execution is independent and assertions validate exactly the record created by the current thread
 - Avoids false positives from duplicate data
@@ -45,6 +47,7 @@ The framework validates user experience across two critical profiles:
 ## Reporting & Continuous Integration
 
 This project uses **GitHub Actions** for Continuous Testing.
+
 - **Visual Dashboards:** Each execution generates a dynamic summary table directly in the GitHub Actions UI.
 - **Cross-Platform Visualization:** Results are clearly labeled as **💻 Desktop** or **📱 Mobile**.
 - **Evidence Collection:** If a test fails, screenshots and JUnit XML reports are automatically uploaded as job artifacts.
@@ -67,11 +70,11 @@ The easiest way to review the execution results is directly through **GitHub Act
 
 The following documents detail the testing strategy, requirements coverage, and identified defects:
 
-* **[Test Plan](./docs/TEST_PLAN.md):** Overall strategy, scope, environment matrix, and risk mitigation.
-* **[Use Cases](./docs/USE_CASES.md):** Formal functional requirements and acceptance criteria.
-* **[Test Cases](./docs/TEST_CASES.md):** Detailed test scenarios and their mapping to requirements.
-* **[Bug Reports](./docs/BUGS.md):** Detailed report of identified defects with animated evidence (GIFs).
-   
+- **[Test Plan](./docs/TEST_PLAN.md):** Overall strategy, scope, environment matrix, and risk mitigation.
+- **[Use Cases](./docs/USE_CASES.md):** Formal functional requirements and acceptance criteria.
+- **[Test Cases](./docs/TEST_CASES.md):** Detailed test scenarios and their mapping to requirements.
+- **[Bug Reports](./docs/BUGS.md):** Detailed report of identified defects with animated evidence (GIFs).
+
 ---
 
 ## Prerequisites

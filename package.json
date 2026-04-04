@@ -16,5 +16,5 @@
     "@wdio/spec-reporter": "^8.x.x",
     "chromedriver": "^x.x.x",
     "wdio-chromedriver-service": "^x.x.x"
-  }  
+  }
 }

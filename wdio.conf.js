@@ -44,7 +44,6 @@ export const config = {
       {
         outputDir: "./reports",
         outputFileFormat: function (options) {
-          // Esto creará nombres claros: results-Desktop.xml o results-Mobile.xml
           const platform = options.capabilities["goog:chromeOptions"]
             ?.mobileEmulation
             ? "Mobile"

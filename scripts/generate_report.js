@@ -50,7 +50,7 @@ if (fs.existsSync(perfFilePath)) {
 const passRate = totalTests > 0 ? ((passed / totalTests) * 100).toFixed(2) : 0;
 
 const summary = `
-## 📊 Stensul Quality Intelligence Report
+## Quality Intelligence Report
 > *Data processed from real-time execution logs*
 
 | Metric | Value |

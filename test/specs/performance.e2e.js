@@ -1,7 +1,7 @@
 import { expect } from '@wdio/globals';
 import fs from 'fs'; 
 
-describe('Stensul Performance Audit', () => {
+describe('Performance Audit', () => {
     it('should capture performance score and save it for the dashboard', async () => {
         await browser.enablePerformanceAudits();
         await browser.url('/'); 

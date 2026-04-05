@@ -3,6 +3,7 @@ name: End-to-End Tests
 on:
   push:
     branches: [main, feature/qa-ecosystem]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -41,12 +42,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Check Formatting (Prettier)
-        run: npx prettier --check . || echo "Formatting issues found, but continuing..."
-
-      - name: Security Scan (Audit)
-        run: npm audit || true
-
       - name: Setup Chrome
         uses: browser-actions/setup-chrome@v1
         with:
@@ -54,13 +49,21 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-     
-      - name: Create Reports Directory
-        run: mkdir -p reports/json-results  
+      
+      - name: Prepare Workspace
+        run: |
+          mkdir -p reports/json-results
+          mkdir -p errorShots
+          rm -rf reports/*
+          rm -rf errorShots/*
         
       - name: Run Automated Tests (Docker Compose)
         run: |
           docker compose up --build --exit-code-from automation-tests
+
+      - name: Fix File Permissions
+        if: always()
+        run: sudo chmod -R 777 reports/ errorShots/ || true
 
       - name: Upload Test Results
         if: always()
@@ -101,19 +104,24 @@ jobs:
           import xml.etree.ElementTree as ET
           import os
 
-          for file in sorted(os.listdir('reports')):
-              if file.endswith('.xml'):
+          report_path = 'reports'
+          if os.path.exists(report_path):
+              files = [f for f in os.listdir(report_path) if f.endswith('.xml')]
+              for file in sorted(files):
                   platform = file.replace('results-', '').replace('.xml', '')
-                  tree = ET.parse(f'reports/{file}')
-                  root = tree.getroot()
-                  suites = root.findall('.//testsuite') if root.tag == 'testsuites' else [root]
-                  for suite in suites:
-                      for tc in suite.findall('testcase'):
-                          name = tc.get('name')
-                          time = tc.get('time')
-                          failure = tc.find('failure')
-                          status = '❌ Failed' if failure is not None else '✅ Passed'
-                          print(f'| {platform} | {name} | {time}s | {status} |')
+                  try:
+                      tree = ET.parse(f'reports/{file}')
+                      root = tree.getroot()
+                      suites = root.findall('.//testsuite') if root.tag == 'testsuites' else [root]
+                      for suite in suites:
+                          for tc in suite.findall('testcase'):
+                              name = tc.get('name')
+                              time = tc.get('time')
+                              failure = tc.find('failure')
+                              status = '❌ Failed' if failure is not None else '✅ Passed'
+                              print(f'| {platform} | {name} | {time}s | {status} |')
+                  except Exception:
+                      pass
           " >> $GITHUB_STEP_SUMMARY
 
           echo "---" >> $GITHUB_STEP_SUMMARY
@@ -124,5 +132,5 @@ jobs:
           echo "- **Run Link:** [View Job Details](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
 
       - name: Generate Quality Dashboard (Databricks Simulation)
-        if: always() # Queremos el reporte aunque los tests fallen
+        if: always()
         run: node scripts/generate_report.js

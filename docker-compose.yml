@@ -7,3 +7,4 @@ services:
       - /app/node_modules
       - ./reports:/app/reports
       - ./errorShots:/app/errorShots
+      - ./reports:/app/reports

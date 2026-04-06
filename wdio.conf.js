@@ -50,7 +50,7 @@ export const config = {
             ?.mobileEmulation
             ? "Mobile"
             : "Desktop";
-          return `results-${platform}.xml`;
+          return `results-${platform}-${options.cid}.xml`;
         },
       },
     ],

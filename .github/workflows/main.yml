@@ -88,48 +88,59 @@ jobs:
       - name: Add Visual Summary
         if: always()
         run: |
-          echo "# TEST AUTOMATION RESULTS" >> $GITHUB_STEP_SUMMARY
+          echo "# 🚀 TEST AUTOMATION RESULTS" >> $GITHUB_STEP_SUMMARY
 
           if [ -d "errorShots" ] && [ "$(ls -A errorShots)" ]; then
             echo "### ❌ Status: FAILURES DETECTED" >> $GITHUB_STEP_SUMMARY
-            echo "> **Note:** You can download the screenshots from the **Artifacts** section at the bottom of this page." >> $GITHUB_STEP_SUMMARY
           else
             echo "### ✅ Status: ALL PASSED" >> $GITHUB_STEP_SUMMARY
           fi
 
-          echo "## Execution Details" >> $GITHUB_STEP_SUMMARY
-          echo "| Platform | Test Case Name | Duration | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "| :--- | :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 Detailed Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Type | Test Case | Duration | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- | :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          
           python3 -c "
           import xml.etree.ElementTree as ET
           import os
 
           report_path = 'reports/junit-results'
+          results = []
+
           if os.path.exists(report_path):
               files = [f for f in os.listdir(report_path) if f.endswith('.xml')]
-              for file in sorted(files):
-                  platform = file.replace('results-', '').replace('.xml', '')
+              for file in files:
+                  platform = '📱 Mobile' if 'Mobile' in file else '💻 Desktop'
                   try:
-                      tree = ET.parse(f'reports/junit-results/{file}')
+                      tree = ET.parse(f'{report_path}/{file}')
                       root = tree.getroot()
                       suites = root.findall('.//testsuite') if root.tag == 'testsuites' else [root]
                       for suite in suites:
+                          suite_name = suite.get('name', '')
+                          test_type = '⚡ Perf' if 'Performance' in suite_name or 'performance' in file else '🛠️ E2E'
+                          
                           for tc in suite.findall('testcase'):
                               name = tc.get('name')
                               time = tc.get('time')
                               failure = tc.find('failure')
                               status = '❌ Failed' if failure is not None else '✅ Passed'
-                              print(f'| {platform} | {name} | {time}s | {status} |')
+                              # Guardamos en lista para ordenar
+                              results.append({
+                                  'platform': platform,
+                                  'type': test_type,
+                                  'name': name,
+                                  'time': time,
+                                  'status': status,
+                                  'priority': 1 if test_type == '🛠️ E2E' else 2
+                              })
                   except Exception:
                       pass
+              
+              results.sort(key=lambda x: (x['priority'], x['platform']))
+              
+              for r in results:
+                  print(f'| {r[\"platform\"]} | {r[\"type\"]} | {r[\"name\"]} | {r[\"time\"]}s | {r[\"status\"]} |')
           " >> $GITHUB_STEP_SUMMARY
-
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "### Execution Metadata" >> $GITHUB_STEP_SUMMARY
-          echo "- **Triggered by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit ID:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Run Link:** [View Job Details](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
 
       - name: Generate Quality Dashboard 
         if: always()

@@ -81,7 +81,7 @@ jobs:
         if: always()
         with:
           name: "Detailed Test Results: Desktop & Mobile"
-          path: reports/*.xml
+          path: reports/junit-results/*.xml
           reporter: java-junit
           fail-on-error: false
 
@@ -104,13 +104,13 @@ jobs:
           import xml.etree.ElementTree as ET
           import os
 
-          report_path = 'reports'
+          report_path = 'reports/junit-results'
           if os.path.exists(report_path):
               files = [f for f in os.listdir(report_path) if f.endswith('.xml')]
               for file in sorted(files):
                   platform = file.replace('results-', '').replace('.xml', '')
                   try:
-                      tree = ET.parse(f'reports/{file}')
+                      tree = ET.parse(f'reports/junit-results/{file}')
                       root = tree.getroot()
                       suites = root.findall('.//testsuite') if root.tag == 'testsuites' else [root]
                       for suite in suites:

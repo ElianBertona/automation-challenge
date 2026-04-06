@@ -49,14 +49,14 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name: Prepare Workspace
         run: |
           mkdir -p reports/json-results
           mkdir -p errorShots
           rm -rf reports/*
           rm -rf errorShots/*
-        
+
       - name: Run Automated Tests (Docker Compose)
         run: |
           docker compose up --build --exit-code-from automation-tests
@@ -131,6 +131,6 @@ jobs:
           echo "- **Commit ID:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Run Link:** [View Job Details](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
 
-      - name: Generate Quality Dashboard (Databricks Simulation)
+      - name: Generate Quality Dashboard 
         if: always()
         run: node scripts/generate_report.js

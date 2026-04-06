@@ -1,5 +1,5 @@
-import { $, $$ } from "@wdio/globals";
-import { StrangerMap } from "../uimaps/stranger.map";
+import { $ } from "@wdio/globals";
+import { StrangerMap } from "../uimaps/stranger.map.js";
 
 class StrangerPage {
     get inputImage() { 

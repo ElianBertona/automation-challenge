@@ -1,77 +1,75 @@
 import fs from 'fs';
 import path from 'path';
 
-// Definimos las rutas relativas a la raíz del proyecto
 const reportDir = './reports/json-results';
 const perfFilePath = './reports/perf-score.txt';
 
-let totalTests = 0;
-let passed = 0;
-let failed = 0;
+let totalTests = 0, passed = 0, failed = 0;
 let realPerfScore = "N/A";
 
-console.log("--- Iniciando Generación de Dashboard ---");
+console.log("--- Generating Advanced Quality Dashboard ---");
 
 if (fs.existsSync(reportDir)) {
     const files = fs.readdirSync(reportDir, { recursive: true })
                     .filter(file => typeof file === 'string' && file.endsWith('.json'));
     
-    console.log(`Archivos JSON encontrados en ${reportDir}: ${files.length}`);
-
     files.forEach(file => {
         try {
-            const filePath = path.join(reportDir, file);
-            const rawData = fs.readFileSync(filePath, 'utf8');
-            const content = JSON.parse(rawData);
-
+            const content = JSON.parse(fs.readFileSync(path.join(reportDir, file), 'utf8'));
             if (content.metrics) {
                 totalTests += (content.metrics.tests || 0);
                 passed += (content.metrics.passed || 0);
                 failed += (content.metrics.failed || 0);
             }
-        } catch (error) {
-            console.error(`Error procesando el archivo ${file}:`, error.message);
-        }
+        } catch (e) {}
     });
-} else {
-    console.log(`⚠️ Advertencia: La carpeta de reportes ${reportDir} no existe.`);
 }
 
 if (fs.existsSync(perfFilePath)) {
     try {
         const score = fs.readFileSync(perfFilePath, 'utf8').trim();
-        realPerfScore = `${score}/100`;
-        console.log(`✅ Score de Performance cargado: ${realPerfScore}`);
-    } catch (error) {
-        console.error("Error leyendo perf-score.txt:", error.message);
-    }
+        realPerfScore = isNaN(score) ? score : `${score}/100`;
+    } catch (e) {}
 }
 
 const passRate = totalTests > 0 ? ((passed / totalTests) * 100).toFixed(2) : 0;
 
 const summary = `
-## Quality Intelligence Report
-> *Data processed from real-time execution logs*
+# Quality Intelligence Dashboard
 
-| Metric | Value |
+## SECTION 1: Functional E2E Analysis
+> *Validation of Create, Edit, and Delete workflows*
+
+| Metric | Status |
 | :--- | :--- |
-| **Total Tests Executed** | ${totalTests} |
-| **Pass Rate** | ${passRate}% ${passRate >= 100 ? '✅' : '⚠️'} |
-| **Lighthouse Performance** | ${realPerfScore} 🚀 |
-| **Tests Passed** | ${passed} |
-| **Tests Failed** | ${failed} |
-
-### 🔍 Analysis Insight:
-${failed > 0 
-    ? "❌ **Critical Alert:** Regressions detected. The current build does not meet the stability threshold." 
-    : (totalTests === 0 ? "⚠️ **Warning:** No functional tests were detected. Check the Docker/WDIO execution logs." : "💎 **Stability Confirmed:** All functional checkpoints passed successfully.")}
+| **Total Test Cases** | ${totalTests} |
+| **Pass Rate** | **${passRate}%** ${passRate >= 100 ? '✅' : '⚠️'} |
+| **Success / Failure** | ${passed} ✅ / ${failed} ❌ |
 
 ---
-*Environment: Production / Heroku | Generated: ${new Date().toLocaleString()}*
+
+## SECTION 2: Technical Performance Audit
+> *Lighthouse engine analysis for Production environment*
+
+| Metric | Score |
+| :--- | :--- |
+| **Performance Score** | **${realPerfScore}** |
+| **Status** | ${realPerfScore !== "N/A" ? 'Audited 🛡️' : 'Skipped/Not Available 🧊'} |
+
+---
+
+## Executive Insights
+${failed > 0 
+    ? "❌ **Critical Alert:** Regressions detected in CRUD operations. Build stability is compromised." 
+    : (totalTests === 0 ? "⚠️ **Data Gap:** No functional logs found. Review Docker volume sync." : "💎 **Stability Confirmed:** Core business logic is operating within expected parameters.")}
+
+---
+*Environment: Heroku-App | Generated: ${new Date().toLocaleString()}*
 `;
 
+// --- OUTPUT ---
 if (process.env.GITHUB_STEP_SUMMARY) {
     fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
 } else {
-    console.log("\n" + summary);
+    console.log(summary);
 }

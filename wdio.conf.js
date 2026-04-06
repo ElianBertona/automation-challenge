@@ -37,28 +37,29 @@ export const config = {
       },
     },
   ],
-reporters: [
+  reporters: [
     "spec",
     [
-        "junit",
-        {
-            outputDir: "./reports",
-            outputFileFormat: function (options) {
-                const platform = options.capabilities["goog:chromeOptions"]?.mobileEmulation 
-                    ? "Mobile" 
-                    : "Desktop";
-                return `results-${platform}.xml`;
-            },
+      "junit",
+      {
+        outputDir: "./reports",
+        outputFileFormat: function (options) {
+          const platform = options.capabilities["goog:chromeOptions"]
+            ?.mobileEmulation
+            ? "Mobile"
+            : "Desktop";
+          return `results-${platform}.xml`;
         },
+      },
     ],
     [
-        "json",
-        {
-            outputDir: "./reports/json-results"
-        }
+      "json",
+      {
+        outputDir: "./reports/json-results",
+      },
     ],
-],
-  services: ['devtools' ],
+  ],
+  services: ['devtools'],
   strictSSL: false,
   // ===================
   // Test Configurations

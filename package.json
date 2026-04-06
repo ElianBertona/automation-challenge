@@ -16,7 +16,7 @@
     "@wdio/local-runner": "^8.x.x",
     "@wdio/mocha-framework": "^8.x.x",
     "@wdio/spec-reporter": "^8.x.x",
-    "chromedriver": "^x.x.x",
+    "chromedriver": "^147.0.1",
     "wdio-chromedriver-service": "--latest"
   }
 }

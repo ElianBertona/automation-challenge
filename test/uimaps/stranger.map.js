@@ -18,6 +18,6 @@ export const StrangerMap = {
     dynamic: {
         rowByText: (text) => `//p[text()="${text}"]/ancestor::li`,
         textElement: (text) => `//p[text()="${text}"]`,
-        imageInRow: 'img' // Se usa relativo a la fila
+        imageInRow: 'img'
     }
 };

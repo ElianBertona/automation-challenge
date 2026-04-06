@@ -4,53 +4,52 @@
 
 ## Overview
 
-This project contains an end-to-end (E2E) testing suite for the Strangerlist application. The solution has been architected following industry best practices, utilizing **WebdriverIO (v8+)**, **Node.js**, and **Docker** to ensure a consistent execution environment.
+This project contains a **Production-Ready** end-to-end (E2E) testing suite for the Strangerlist application. The solution has been architected following industry best practices, utilizing **WebdriverIO (v8+)**, **Node.js**, and **Docker** to ensure a consistent, scalable, and observable execution environment.
 
 ---
 
 ## Architecture and Strategy
 
-To ensure test reliability in a concurrent execution environment and against an application with variable latency, the following technical solutions were implemented:
+To ensure test reliability in a concurrent execution environment and against a public application with variable latency (Heroku), the following technical solutions were implemented:
 
-### 1. Design Pattern: Page Object Model (POM)
+### 1. Design Pattern: Advanced Page Object Model (POM)
 
 We implemented a decoupled architecture where:
+- **Test logic** resides in specs.
+- **UI interaction** lives in pageobjects.
+- **Centralized UI Mapping:** All selectors are isolated in a dedicated `stranger.map.js` object, separating the "what" from the "how".
+- **Dynamic Selectors & XPath Axes:** We use **`ancestor::li`** to perform surgical interactions (Edit/Delete) within specific list item contexts, preventing fragile index-based testing or erroneous interactions with other rows.
 
-- **Test logic** resides in specs
-- **UI interaction** lives in pageobjects
-- **Centralized dynamic selectors** allow locating elements (Edit/Delete buttons) within a specific list item context
-- This prevents erroneous interactions with other rows
+### 2. Idempotency & Unique Data Strategy
 
-### 2. Unique Data Strategy
+Since the application allows items with duplicate names and lives in a shared environment:
+- The framework generates unique identifiers based on **Date.now()**.
+- Each execution is **idempotent**: tests can run repeatedly without side effects or data collisions.
+- Assertions validate exactly the record created by the current execution thread, avoiding false positives from duplicate data.
 
-Since the application allows items with duplicate names:
+### 3. Execution Strategy: Stability & Integrity
 
-- The framework generates unique identifiers based on **Date.now()**
-- Each execution is independent and assertions validate exactly the record created by the current thread
-- Avoids false positives from duplicate data
+- **Sequential Execution (`maxInstances: 1`):** As we are testing against a single public instance with a shared database, we prioritized **Data Integrity** over parallel speed. This prevents race conditions where multiple threads might conflict while modifying the same resources simultaneously.
+- **Synchronization and Robustness (Smart Waits):** We use explicit waits (`waitForExist`, `waitForDisplayed`) to mitigate database latency and AngularJS animations.
+- **Reverse Waits:** Confirm elements have been removed from the DOM before deletion assertions.
+- **Scroll Management:** `scrollIntoView` prevents "element click intercepted" errors from the top navigation bar.
 
-### 3. Synchronization and Robustness (Smart Waits)
+### 4. Multi-Platform & Performance Auditing
 
-To mitigate database latency (Heroku) and AngularJS animations, we use explicit waits:
+The framework validates user experience across critical profiles:
+- **💻 Desktop:** 1920x1080 resolution.
+- **📱 Mobile:** iPhone X emulation with specific network/CPU throttling.
+- **Performance Auditing:** Integrated **Lighthouse (via DevTools Service)** to capture real-world performance scores and core web vitals during the E2E flow.
 
-- **waitForExist / waitForDisplayed** — Ensure elements are present before interaction
-- **Reverse Waits** — Confirm elements have been removed from the DOM before deletion assertions
-- **Scroll Management** — scrollIntoView prevents "element click intercepted" errors from the top navigation bar
+---
 
-### 4. Multi-device Execution
-
-The framework validates user experience across two critical profiles:
-
-- **Desktop** — 1920x1080 resolution
-- **Mobile** — iPhone X emulation for list and form responsiveness
-
-## Reporting & Continuous Integration
+## Reporting & Continuous Integration (CI)
 
 This project uses **GitHub Actions** for Continuous Testing.
 
-- **Visual Dashboards:** Each execution generates a dynamic summary table directly in the GitHub Actions UI.
-- **Cross-Platform Visualization:** Results are clearly labeled as **💻 Desktop** or **📱 Mobile**.
-- **Evidence Collection:** If a test fails, screenshots and JUnit XML reports are automatically uploaded as job artifacts.
+- **Visual Dashboards:** Each execution generates a dynamic summary table directly in the GitHub Actions UI (Step Summary).
+- **Intelligence Reports:** Results are clearly labeled by platform (**💻 Desktop** vs **📱 Mobile**) and include **Performance Metrics**.
+- **Evidence Collection:** Automated screenshots on failure and JUnit XML reports are automatically uploaded as job artifacts.
 
 ## Continuous Integration (CI) - No Setup Required
 
@@ -59,7 +58,8 @@ The easiest way to review the execution results is directly through **GitHub Act
 1. Go to the [**Actions**](https://github.com/ElianBertona/automation-challenge/actions) tab in this repository.
 2. Select the most recent run (e.g., "fix main #20").
 3. In the **Summary** section, you will find a **Visual Dashboard** with:
-   - **Multi-platform results** (Desktop vs. Mobile).
+   - **Multi-platform status** (Desktop vs. Mobile).
+   - **Performance Scores** (Lighthouse Audit).
    - **Execution time** per test case.
    - **Success/Failure status** with emojis for quick scanning.
 4. If a test fails, you can find the **Screenshots** in the "Artifacts" section at the bottom of the page.
@@ -115,28 +115,36 @@ Then use the scripts configured in **package.json**:
 ```
 AUTOMATION-CHALLENGE/
 ├── .github/workflows/
-│   └── main.yml               # CI/CD Pipeline configuration for GitHub Actions
+│   └── main.yml               # CI/CD Pipeline & Custom Dashboard Logic
 ├── assets/
 │   └── test.jpg               # Image asset used for file upload testing
 ├── docs/
 │   ├── evidence/              # Animated GIF evidence for reported defects
-│   │   ├── bug_1.gif
-│   │   ├── bug_2.gif
-│   │   └── bug_3.gif
-│   ├── BUGS.md                # Detailed Bug Reports and defect documentation
-│   ├── TEST_CASES.md          # Traceability Matrix and step-by-step test scenarios
-│   ├── TEST_PLAN.md           # Master Test Plan for the Release v1.0
-│   └── USE_CASES.md           # Formal Functional Use Cases (Create, Edit, Delete)
-├── errorShots/                # Automated screenshots captured on test failure
-├── reports/                   # JUnit/Spec XML execution reports
+│   ├── BUGS.md                # Detailed Bug Reports
+│   ├── TEST_CASES.md          # Traceability Matrix
+│   ├── TEST_PLAN.md           # Master Test Plan
+│   └── USE_CASES.md           # Functional Use Cases
+├── errorShots/                # Screenshots captured on test failure
+├── reports/                   # Execution reports
+│   ├── json-results/          # WebdriverIO JSON output
+│   ├── junit-results/         # JUnit XML for CI integration
+│   └── perf-score.txt         # Lighthouse audit summary
+├── scripts/
+│   └── generate_report.js     # Logic for the GitHub Summary Dashboard
 ├── test/
 │   ├── pageobjects/
-│   │   └── stranger.page.js   # Page Object Model (POM) abstraction layer
-│   └── specs/
-│       └── challenge.e2e.js   # End-to-End test suite definitions
-├── docker-compose.yml         # Docker orchestration for headless execution
-├── Dockerfile                 # Docker image configuration for the test environment
-├── package.json               # Node.js dependencies and custom execution scripts
-├── README.md                  # Main project documentation and setup instructions
-└── wdio.conf.js               # WebdriverIO framework configuration settings
+│   │   └── stranger.page.js   # POM logic & workflows
+│   ├── specs/
+│   │   ├── challenge.e2e.js   # Functional CRUD test suite
+│   │   └── performance.e2e.js # Automated Performance suite
+│   └── uimaps/
+│       └── stranger.map.js    # Centralized UI Selectors
+├── .dockerignore
+├── .gitignore
+├── docker-compose.yml         # Docker orchestration
+├── Dockerfile                 # Docker image configuration
+├── package-lock.json
+├── package.json               # Dependencies and custom scripts
+├── README.md                  # Main documentation
+└── wdio.conf.js               # WebdriverIO configuration
 ```

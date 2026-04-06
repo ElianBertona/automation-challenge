@@ -1,21 +1,21 @@
-import { expect } from '@wdio/globals';
-import fs from 'fs'; 
+import { expect } from "@wdio/globals";
+import fs from "fs";
 
-describe('Performance Audit', () => {
-    it('should capture performance score and save it for the dashboard', async () => {
-        await browser.enablePerformanceAudits();
-        await browser.url('/'); 
-        
-        const score = await browser.getPerformanceScore();
-        const scorePercentage = (score * 100).toFixed(0);
-        
-        console.log(`PERFORMANCE SCORE: ${scorePercentage}/100`);
+describe("Performance Audit", () => {
+  it("should capture performance score and save it for the dashboard", async () => {
+    await browser.enablePerformanceAudits();
+    await browser.url("/");
 
-        if (!fs.existsSync('./reports')) {
-            fs.mkdirSync('./reports');
-        }
-        fs.writeFileSync('./reports/perf-score.txt', scorePercentage);
-        
-        expect(score).toBeGreaterThan(0.5);
-    });
+    const score = await browser.getPerformanceScore();
+    const scorePercentage = (score * 100).toFixed(0);
+
+    console.log(`PERFORMANCE SCORE: ${scorePercentage}/100`);
+
+    if (!fs.existsSync("./reports")) {
+      fs.mkdirSync("./reports");
+    }
+    fs.writeFileSync("./reports/perf-score.txt", scorePercentage);
+
+    expect(score).toBeGreaterThan(0.5);
+  });
 });

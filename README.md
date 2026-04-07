@@ -1,6 +1,6 @@
 [![End-to-End Tests (Strangerlist)](https://github.com/ElianBertona/automation-challenge/actions/workflows/main.yml/badge.svg)](https://github.com/ElianBertona/automation-challenge/actions/workflows/main.yml)
 
-# Angular Strangerlist Automation Challenge
+# Angular Strangerlist Automation Challenge push
 
 ## Overview
 
@@ -51,7 +51,7 @@ This project uses **GitHub Actions** for Continuous Testing.
 - **Intelligence Reports:** Results are clearly labeled by platform (**💻 Desktop** vs **📱 Mobile**) and include **Performance Metrics**.
 - **Evidence Collection:** Automated screenshots on failure and JUnit XML reports are automatically uploaded as job artifacts.
 
-## Continuous Integration (CI) - No Setup Required
+## Continuous Integration (CI) - No Setup Required 
 
 The easiest way to review the execution results is directly through **GitHub Actions**. You don't need to install Node.js or Docker locally to verify the project's status.
 

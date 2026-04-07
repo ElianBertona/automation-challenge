@@ -1,35 +1,38 @@
 import { $ } from "@wdio/globals";
+import { StrangerMap } from "../uimaps/stranger.map.js";
 
 class StrangerPage {
   get inputImage() {
-    return $("#inputImage");
+    return $(StrangerMap.inputs.image);
   }
   get inputText() {
-    return $('textarea[name="text"]');
+    return $(StrangerMap.inputs.textArea);
   }
   get btnCreate() {
-    return $("button=Create Item");
+    return $(StrangerMap.buttons.create);
   }
   get btnUpdate() {
-    return $("button=Update Item");
+    return $(StrangerMap.buttons.update);
   }
   get itemsCountLabel() {
-    return $("h1.ng-binding");
+    return $(StrangerMap.containers.itemsCount);
   }
   get modalContainer() {
-    return $(".modal-content");
+    return $(StrangerMap.containers.modal);
   }
   get btnConfirmDelete() {
-    return $("button=Yes, delete it!");
+    return $(StrangerMap.buttons.confirmDelete);
   }
   get allStoriesTexts() {
-    return $$("p.story");
+    return $$(StrangerMap.containers.allStories);
   }
-  btnDeleteInRow(row) {
-    return row.$("button=Delete");
+
+  async getRowByText(text) {
+    return $(StrangerMap.dynamic.rowByText(text));
   }
-  btnEditInRow(row) {
-    return row.$("button=Edit");
+
+  async getElementByText(text) {
+    return $(StrangerMap.dynamic.textElement(text));
   }
 
   async open() {
@@ -46,18 +49,17 @@ class StrangerPage {
     await this.inputText.setValue(text);
     await this.btnCreate.click();
 
-    await browser.waitUntil(
-      async () => {
-        return await this.isTextInList(text);
-      },
-      { timeout: 10000, timeoutMsg: "The item did not appear in the list" },
-    );
+    await browser.waitUntil(async () => await this.isTextInList(text), {
+      timeout: 10000,
+      timeoutMsg: `The item with text "${text}" did not appear in the list`,
+    });
   }
 
   async clickDeleteForText(text) {
-    const row = await $(`//p[text()="${text}"]/ancestor::li`);
+    const row = await this.getRowByText(text);
     await row.scrollIntoView();
-    const deleteBtn = await this.btnDeleteInRow(row);
+
+    const deleteBtn = await row.$(StrangerMap.buttons.deleteInRow);
     await deleteBtn.waitForClickable();
     await deleteBtn.click();
   }
@@ -66,27 +68,19 @@ class StrangerPage {
     await this.modalContainer.waitForDisplayed();
     await this.btnConfirmDelete.click();
 
-    const element = await $(`//p[text()="${textThatShouldLeave}"]`);
-    await element.waitForExist({ reverse: true, timeout: 8000 });
-  }
-
-  async getAnotherItemText(excludeText) {
-    await (await $("p.story")).waitForExist();
-    const stories = await this.allStoriesTexts;
-
-    for (const story of stories) {
-      const text = await story.getText();
-      if (text.trim() !== excludeText.trim() && text.trim().length > 0) {
-        return text;
-      }
-    }
-    throw new Error("There are no other items");
+    const element = await this.getElementByText(textThatShouldLeave);
+    await element.waitForExist({
+      reverse: true,
+      timeout: 8000,
+      timeoutMsg: "The item was not deleted from the DOM",
+    });
   }
 
   async editItemBySpecificText(originalText, newText) {
-    const row = await $(`//p[text()="${originalText}"]/ancestor::li`);
+    const row = await this.getRowByText(originalText);
     await row.scrollIntoView();
-    const editBtn = await this.btnEditInRow(row);
+
+    const editBtn = await row.$(StrangerMap.buttons.editInRow);
 
     try {
       await editBtn.click();
@@ -96,17 +90,36 @@ class StrangerPage {
 
     await this.inputText.setValue(newText);
     await this.btnUpdate.click();
+
     await this.btnUpdate.waitForDisplayed({ reverse: true });
   }
 
+  async getAnotherItemText(excludeText) {
+    const firstStory = await $(StrangerMap.containers.allStories);
+    await firstStory.waitForExist();
+
+    const stories = await this.allStoriesTexts;
+
+    for (const story of stories) {
+      const text = await story.getText();
+      const cleanText = text.trim();
+      const cleanExclude = excludeText.trim();
+
+      if (cleanText !== cleanExclude && cleanText.length > 0) {
+        return cleanText;
+      }
+    }
+    throw new Error("There are no other items to interact with in the list");
+  }
+
   async isTextInList(text) {
-    const element = await $(`//p[text()="${text}"]`);
+    const element = await this.getElementByText(text);
     return await element.isDisplayed().catch(() => false);
   }
 
   async isItemFullyCreated(text) {
-    const row = await $(`//p[text()="${text}"]/ancestor::li`);
-    const image = await row.$("img");
+    const row = await this.getRowByText(text);
+    const image = await row.$(StrangerMap.dynamic.imageInRow);
 
     const isTextDisplayed = await row.isDisplayed();
     const imageSrc = await image.getAttribute("src");

@@ -12,6 +12,7 @@ export const config = {
   capabilities: [
     {
       browserName: "chrome",
+      "wdio:enviromentName": "Desktop",
       "goog:chromeOptions": {
         args: [
           "--headless",
@@ -25,6 +26,7 @@ export const config = {
     },
     {
       browserName: "chrome",
+      "wdio:enviromentName": "Mobile-iPhoneX",
       "goog:chromeOptions": {
         args: [
           "--headless",
@@ -42,17 +44,25 @@ export const config = {
     [
       "junit",
       {
-        outputDir: "./reports",
+        outputDir: "./reports/junit-results",
         outputFileFormat: function (options) {
           const platform = options.capabilities["goog:chromeOptions"]
             ?.mobileEmulation
             ? "Mobile"
             : "Desktop";
-          return `results-${platform}.xml`;
+          return `results-${platform}-${options.cid}.xml`;
         },
       },
     ],
+    [
+      "json",
+      {
+        outputDir: "./reports/json-results",
+      },
+    ],
   ],
+  services: ["devtools"],
+  strictSSL: false,
   // ===================
   // Test Configurations
   // ===================

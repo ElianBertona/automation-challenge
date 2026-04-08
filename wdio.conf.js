@@ -46,11 +46,33 @@ export const config = {
       {
         outputDir: "./reports/junit-results",
         outputFileFormat: function (options) {
+          const isPerf = options.specs[0].includes("performance");
           const platform = options.capabilities["goog:chromeOptions"]
             ?.mobileEmulation
             ? "Mobile"
             : "Desktop";
-          return `results-${platform}-${options.cid}.xml`;
+          const type = isPerf ? "Perf" : "E2E";
+          return `results-${type}-${platform}.xml`;
+        },
+
+        suiteNameFormat: function (options) {
+          const isPerf = options.specs[0].includes("performance");
+          const platform = options.capabilities["goog:chromeOptions"]
+            ?.mobileEmulation
+            ? "MOBILE"
+            : "DESKTOP";
+          const typeLabel = isPerf ? "⚡ PERFORMANCE" : "🛠️ E2E FUNCTIONAL";
+
+          return `[${platform}] ${typeLabel} - {suiteName}`;
+        },
+
+        packageName: function (options) {
+          const isPerf = options.specs[0].includes("performance");
+          return isPerf ? "StrangerList.Audit" : "StrangerList.E2E";
+        },
+        errorOptions: {
+          expected: "inline",
+          actual: "inline",
         },
       },
     ],

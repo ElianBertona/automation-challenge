@@ -41,32 +41,38 @@ export const config = {
   ],
   reporters: [
     "spec",
+    // En wdio.conf.js -> reporters -> junit
     [
       "junit",
       {
         outputDir: "./reports/junit-results",
         outputFileFormat: function (options) {
-          const isPerf = options.specs[0].includes("performance");
+          const specPath =
+            options.specs && options.specs.length > 0 ? options.specs[0] : "";
+          const isPerf =
+            specPath.includes("performance") || specPath.includes("perf");
           const platform = options.capabilities["goog:chromeOptions"]
             ?.mobileEmulation
             ? "Mobile"
             : "Desktop";
           const type = isPerf ? "Perf" : "E2E";
-          // Nombres limpios, sin caracteres raros para el sistema de archivos
-          return `results-${type}-${platform}.xml`;
+
+          return `results-${type}-${platform}-${options.cid}.xml`;
         },
         suiteNameFormat: function (options) {
-          const isPerf = options.specs[0].includes("performance");
+          const specPath =
+            options.specs && options.specs.length > 0 ? options.specs[0] : "";
+          const isPerf =
+            specPath.includes("performance") || specPath.includes("perf");
           const platform = options.capabilities["goog:chromeOptions"]
             ?.mobileEmulation
             ? "Mobile"
             : "Desktop";
-          const typeLabel = isPerf ? "PERFORMANCE" : "E2E";
-          // Agregamos un fallback por si {suiteName} viene vacío
-          const name = options.suiteName || "StrangerList";
-          return `${typeLabel}_${platform}_${name}`;
+          const typeLabel = isPerf ? "⚡ PERFORMANCE" : "🛠️ E2E";
+          const name = options.suiteName || "StrangerList Suite";
+          return `[${platform}] ${typeLabel} - ${name}`;
         },
-        packageName: "StrangerReports", // Nombre estático para evitar que el parser se pierda en carpetas
+        packageName: "StrangerList.QualityReport",
         errorOptions: {
           expected: "inline",
           actual: "inline",

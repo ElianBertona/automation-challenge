@@ -47,32 +47,34 @@ export const config = {
       {
         outputDir: "./reports/junit-results",
         outputFileFormat: function (options) {
-          const specPath =
-            options.specs && options.specs.length > 0 ? options.specs[0] : "";
-          const isPerf =
-            specPath.includes("performance") || specPath.includes("perf");
-          const platform = options.capabilities["goog:chromeOptions"]
-            ?.mobileEmulation
-            ? "Mobile"
-            : "Desktop";
-          const type = isPerf ? "Perf" : "E2E";
+          // Buscamos 'performance' de forma ultra segura
+          const specs = options.specs || [];
+          const isPerf = specs.some((s) => String(s).includes("perf"));
 
-          return `results-${type}-${platform}-${options.cid}.xml`;
+          // Verificación de plataforma
+          const caps = options.capabilities || {};
+          const isMobile = caps["goog:chromeOptions"]?.mobileEmulation || false;
+
+          const type = isPerf ? "Perf" : "E2E";
+          const plat = isMobile ? "Mobile" : "Desktop";
+
+          return `results-${type}-${plat}-${options.cid || "default"}.xml`;
         },
         suiteNameFormat: function (options) {
-          const specPath =
-            options.specs && options.specs.length > 0 ? options.specs[0] : "";
-          const isPerf =
-            specPath.includes("performance") || specPath.includes("perf");
-          const platform = options.capabilities["goog:chromeOptions"]
-            ?.mobileEmulation
-            ? "Mobile"
-            : "Desktop";
+          const specs = options.specs || [];
+          const isPerf = specs.some((s) => String(s).includes("perf"));
+
+          const caps = options.capabilities || {};
+          const isMobile = caps["goog:chromeOptions"]?.mobileEmulation || false;
+
           const typeLabel = isPerf ? "⚡ PERFORMANCE" : "🛠️ E2E";
-          const name = options.suiteName || "StrangerList Suite";
-          return `[${platform}] ${typeLabel} - ${name}`;
+          const platLabel = isMobile ? "MOBILE" : "DESKTOP";
+          const sName = options.suiteName || "Test Suite";
+
+          return `[${platLabel}] ${typeLabel} - ${sName}`;
         },
-        packageName: "StrangerList.QualityReport",
+        // Usamos un string estático aquí para evitar errores de propiedades nulas
+        packageName: "StrangerList.Automation",
         errorOptions: {
           expected: "inline",
           actual: "inline",

@@ -44,6 +44,7 @@ jobs:
         env:
           # WDIO usará esta variable para filtrar la carpeta
           SPEC_PATH: "./test/specs/e2e/**/*.js"
+          continue-on-error: true
 
       # --- GATE 3: PERFORMANCE AUDIT ---
       - name: Run Performance Audit

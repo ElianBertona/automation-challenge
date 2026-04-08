@@ -52,24 +52,21 @@ export const config = {
             ? "Mobile"
             : "Desktop";
           const type = isPerf ? "Perf" : "E2E";
+          // Nombres limpios, sin caracteres raros para el sistema de archivos
           return `results-${type}-${platform}.xml`;
         },
-
         suiteNameFormat: function (options) {
           const isPerf = options.specs[0].includes("performance");
           const platform = options.capabilities["goog:chromeOptions"]
             ?.mobileEmulation
-            ? "MOBILE"
-            : "DESKTOP";
-          const typeLabel = isPerf ? "⚡ PERFORMANCE" : "🛠️ E2E FUNCTIONAL";
-
-          return `[${platform}] ${typeLabel} - {suiteName}`;
+            ? "Mobile"
+            : "Desktop";
+          const typeLabel = isPerf ? "PERFORMANCE" : "E2E";
+          // Agregamos un fallback por si {suiteName} viene vacío
+          const name = options.suiteName || "StrangerList";
+          return `${typeLabel}_${platform}_${name}`;
         },
-
-        packageName: function (options) {
-          const isPerf = options.specs[0].includes("performance");
-          return isPerf ? "StrangerList.Audit" : "StrangerList.E2E";
-        },
+        packageName: "StrangerReports", // Nombre estático para evitar que el parser se pierda en carpetas
         errorOptions: {
           expected: "inline",
           actual: "inline",

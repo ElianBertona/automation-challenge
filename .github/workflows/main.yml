@@ -41,6 +41,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+      
+      - name: Run ESLint
+        run: npm run lint
 
       - name: Setup Chrome
         uses: browser-actions/setup-chrome@v1
@@ -60,6 +63,13 @@ jobs:
       - name: Run Automated Tests (Docker Compose)
         run: |
           docker compose up --build --exit-code-from automation-tests
+        env:
+          SPEC_PATH: "./test/specs/e2e/**/*.js"
+
+      - name: Run Performance Audit
+        if: always()
+        run: |
+          docker compose run automation-tests npx wdio run wdio.conf.js --spec ./test/specs/performance/**/*.js
 
       - name: Fix File Permissions
         if: always()
@@ -85,63 +95,100 @@ jobs:
           reporter: java-junit
           fail-on-error: false
 
-      - name: Add Visual Summary
+      - name: 📊 Generate Integrated Quality Summary
         if: always()
         run: |
-          echo "# 🚀 TEST AUTOMATION RESULTS" >> $GITHUB_STEP_SUMMARY
-
-          if [ -d "errorShots" ] && [ "$(ls -A errorShots)" ]; then
-            echo "### ❌ Status: FAILURES DETECTED" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "### ✅ Status: ALL PASSED" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          echo "## 📊 Detailed Execution Summary" >> $GITHUB_STEP_SUMMARY
-          echo "| Platform | Type | Test Case | Duration | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "| :--- | :--- | :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-          
           python3 -c "
           import xml.etree.ElementTree as ET
           import os
 
           report_path = 'reports/junit-results'
+          summary_file = os.environ.get('GITHUB_STEP_SUMMARY')
           results = []
+          failures = []
+
+          def get_clean_name(name):
+              # Limpia el ruido de WDIO en los nombres
+              return name.split('.')[-1] if name else 'Unknown'
 
           if os.path.exists(report_path):
               files = [f for f in os.listdir(report_path) if f.endswith('.xml')]
               for file in files:
-                  platform = '📱 Mobile' if 'Mobile' in file else '💻 Desktop'
+                  platform = '💻 Desktop' if 'Desktop' in file else '📱 Mobile'
                   try:
-                      tree = ET.parse(f'{report_path}/{file}')
+                      tree = ET.parse(os.path.join(report_path, file))
                       root = tree.getroot()
+                      
+                      # Manejo dinámico de etiquetas raíz
                       suites = root.findall('.//testsuite') if root.tag == 'testsuites' else [root]
+                      
                       for suite in suites:
                           suite_name = suite.get('name', '')
-                          test_type = '⚡ Perf' if 'Performance' in suite_name or 'performance' in file else '🛠️ E2E'
+                          is_perf = 'Performance' in suite_name or 'Perf' in file
+                          test_type = '⚡ Perf' if is_perf else '🛠️ E2E'
                           
                           for tc in suite.findall('testcase'):
                               name = tc.get('name')
-                              time = tc.get('time')
-                              failure = tc.find('failure')
-                              status = '❌ Failed' if failure is not None else '✅ Passed'
-                              # Guardamos en lista para ordenar
+                              time = tc.get('time', '0')
+                              fail_node = tc.find('failure')
+                              
+                              status = '✅ Passed'
+                              if fail_node is not None:
+                                  status = '❌ Failed'
+                                  failures.append({
+                                      'platform': platform,
+                                      'name': name,
+                                      'message': fail_node.text[:500] if fail_node.text else 'No message'
+                                  })
+
                               results.append({
                                   'platform': platform,
                                   'type': test_type,
                                   'name': name,
-                                  'time': time,
+                                  'time': f'{float(time):.2f}',
                                   'status': status,
-                                  'priority': 1 if test_type == '🛠️ E2E' else 2
+                                  'priority': 1 if not is_perf else 2
                               })
-                  except Exception:
-                      pass
+                  except Exception as e:
+                      print(f'Error parsing {file}: {e}')
+
+          with open(summary_file, 'a') as f:
+              f.write('# 🚀 TEST AUTOMATION EXECUTIVE SUMMARY\n\n')
+              
+              # Status General
+              if any('❌' in r['status'] for r in results):
+                  f.write('### ❌ Status: FAILURES DETECTED\n\n')
+              elif not results:
+                  f.write('### ⚠️ Status: NO RESULTS FOUND\n\n')
+              else:
+                  f.write('### ✅ Status: ALL SYSTEMS OPERATIONAL\n\n')
+
+              # TABLA PRINCIPAL
+              f.write('## 📊 Execution Overview\n')
+              f.write('| Platform | Type | Test Case | Duration | Status |\n')
+              f.write('| :--- | :--- | :--- | :--- | :--- |\n')
               
               results.sort(key=lambda x: (x['priority'], x['platform']))
-              
               for r in results:
-                  print(f'| {r[\"platform\"]} | {r[\"type\"]} | {r[\"name\"]} | {r[\"time\"]}s | {r[\"status\"]} |')
-          " >> $GITHUB_STEP_SUMMARY
+                  f.write(f'| {r[\"platform\"]} | {r[\"type\"]} | {r[\"name\"]} | {r[\"time\"]}s | {r[\"status\"]} |\n')
 
-      - name: Generate Quality Dashboard 
+              # SECCIÓN DE DETALLES DE FALLOS (Solo si hay errores)
+              if failures:
+                  f.write('\n## 🔍 Failure Deep Dive\n')
+                  for f_detail in failures:
+                      f.write(f'<details>\n<summary>❌ {f_detail[\"platform\"]} - {f_detail[\"name\"]}</summary>\n\n')
+                      f.write('**Error Message:**\n')
+                      f.write(f'```text\n{f_detail[\"message\"]}\n```\n')
+                      f.write('> [!IMPORTANT]\n')
+                      f.write('> Check **Artifacts** section above to download screenshots and full logs.\n')
+                      f.write('</details>\n\n')
+
+              # SECCIÓN DE PERFORMANCE (Si existen)
+              perf_results = [r for r in results if '⚡' in r['type']]
+              if perf_results:
+                  f.write('\n## ⚡ Performance Audit Highlights\n')
+                  f.write('> Detailed performance metrics (LCP, TBT, CLS) are available in the **Detailed Test Results** tab.\n')
+          "
+      - name: Generate Quality Dashboard
         if: always()
         run: node scripts/generate_report.js

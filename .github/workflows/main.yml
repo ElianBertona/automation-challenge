@@ -2,7 +2,7 @@ name: End-to-End & Quality Suite
 
 on:
   push:
-    branches: [main, feature/qa-ecosystem]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -13,7 +13,7 @@ jobs:
   automation-suite:
     name: "Strangerlist Test Suite"
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -22,12 +22,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
 
-      # --- GATE 1: STATIC ANALYSIS ---
       - name: Run ESLint
         run: npx eslint . || echo "Lint errors found but continuing for testing"
 
@@ -37,22 +36,19 @@ jobs:
           mkdir -p errorShots
           chmod -R 777 reports/ errorShots/
 
-      # --- GATE 2: E2E TESTS (FOLDER BASED) ---
       - name: Run E2E Tests
         run: |
           docker compose up --build --exit-code-from automation-tests
         env:
           SPEC_PATH: "./test/specs/e2e/**/*.js"
-          continue-on-error: true
 
-      # --- GATE 3: PERFORMANCE AUDIT ---
       - name: Run Performance Audit
         if: always()
         run: |
           docker compose run automation-tests npx wdio run wdio.conf.js --spec ./test/specs/performance/**/*.js
         continue-on-error: true
 
-      - name: Fix File Permissions (Post-Docker)
+      - name: File Permissions
         if: always()
         run: sudo chmod -R 777 reports/ errorShots/ || true
 
@@ -65,7 +61,6 @@ jobs:
             reports/
             errorShots/
 
-      # --- FINAL GATE: INTEGRATED SUMMARY ---
       - name: 📊 Generate Integrated Quality Summary
         if: always()
         run: |
@@ -76,7 +71,7 @@ jobs:
 
           report_path = 'reports/junit-results'
           summary_file = os.environ.get('GITHUB_STEP_SUMMARY')
-          
+
           # Estructura para 4 tablas separadas
           tables = {
               'E2E_Desk': [], 'E2E_Mobi': [],

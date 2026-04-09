@@ -41,7 +41,6 @@ export const config = {
   ],
   reporters: [
     "spec",
-    // En wdio.conf.js -> reporters -> junit
     [
       "junit",
       {
@@ -51,7 +50,6 @@ export const config = {
           const specs = options.specs || [];
           const isPerf = specs.some((s) => String(s).includes("perf"));
 
-          // Verificación de plataforma
           const caps = options.capabilities || {};
           const isMobile = caps["goog:chromeOptions"]?.mobileEmulation || false;
 
@@ -73,7 +71,6 @@ export const config = {
 
           return `[${platLabel}] ${typeLabel} - ${sName}`;
         },
-        // Usamos un string estático aquí para evitar errores de propiedades nulas
         packageName: "StrangerList.Automation",
         errorOptions: {
           expected: "inline",

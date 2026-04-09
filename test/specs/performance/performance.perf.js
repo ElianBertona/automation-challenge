@@ -2,7 +2,7 @@ import { expect } from "@wdio/globals";
 import fs from "fs";
 
 describe("Performance Audit", () => {
-  it("should capture performance score and save it for the dashboard", async () => {
+  it("Overall Performance Score: ${Math.round(score * 100)}/100`", async () => {
     await browser.enablePerformanceAudits();
     await browser.url("/");
 

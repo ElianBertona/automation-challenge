@@ -46,11 +46,35 @@ export const config = {
       {
         outputDir: "./reports/junit-results",
         outputFileFormat: function (options) {
-          const platform = options.capabilities["goog:chromeOptions"]
-            ?.mobileEmulation
-            ? "Mobile"
-            : "Desktop";
-          return `results-${platform}-${options.cid}.xml`;
+          // Buscamos 'performance' de forma ultra segura
+          const specs = options.specs || [];
+          const isPerf = specs.some((s) => String(s).includes("perf"));
+
+          const caps = options.capabilities || {};
+          const isMobile = caps["goog:chromeOptions"]?.mobileEmulation || false;
+
+          const type = isPerf ? "Perf" : "E2E";
+          const plat = isMobile ? "Mobile" : "Desktop";
+
+          return `results-${type}-${plat}-${options.cid || "default"}.xml`;
+        },
+        suiteNameFormat: function (options) {
+          const specs = options.specs || [];
+          const isPerf = specs.some((s) => String(s).includes("perf"));
+
+          const caps = options.capabilities || {};
+          const isMobile = caps["goog:chromeOptions"]?.mobileEmulation || false;
+
+          const typeLabel = isPerf ? "⚡ PERFORMANCE" : "🛠️ E2E";
+          const platLabel = isMobile ? "MOBILE" : "DESKTOP";
+          const sName = options.suiteName || "Test Suite";
+
+          return `[${platLabel}] ${typeLabel} - ${sName}`;
+        },
+        packageName: "StrangerList.Automation",
+        errorOptions: {
+          expected: "inline",
+          actual: "inline",
         },
       },
     ],

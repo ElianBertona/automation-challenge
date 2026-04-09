@@ -1,4 +1,4 @@
-import StrangerPage from "../pageobjects/stranger.page.js";
+import StrangerPage from "../../pageobjects/stranger.page.js";
 import path from "path";
 
 describe("Angular Strangerlist: Challenge Suite", () => {

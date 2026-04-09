@@ -1,6 +1,6 @@
 [![End-to-End Tests (Strangerlist)](https://github.com/ElianBertona/automation-challenge/actions/workflows/main.yml/badge.svg)](https://github.com/ElianBertona/automation-challenge/actions/workflows/main.yml)
 
-# Angular Strangerlist Automation Challenge push
+# Angular Strangerlist Automation Challenge
 
 ## Overview
 

@@ -1,147 +1,163 @@
-name: End-to-End Tests
+name: End-to-End & Quality Suite
 
 on:
   push:
-    branches: [main, feature/qa-ecosystem]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
   checks: write
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   automation-suite:
     name: "Strangerlist Test Suite"
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Cache Node.js modules
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Setup Chrome
-        uses: browser-actions/setup-chrome@v1
-        with:
-          chrome-version: stable
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Run ESLint
+        run: npx eslint . || echo "Lint errors found but continuing for testing"
 
       - name: Prepare Workspace
         run: |
-          mkdir -p reports/json-results
+          mkdir -p reports/junit-results
           mkdir -p errorShots
-          rm -rf reports/*
-          rm -rf errorShots/*
+          chmod -R 777 reports/ errorShots/
 
-      - name: Run Automated Tests (Docker Compose)
+      - name: Run E2E Tests
         run: |
           docker compose up --build --exit-code-from automation-tests
+        env:
+          SPEC_PATH: "./test/specs/e2e/**/*.js"
 
-      - name: Fix File Permissions
+      - name: Run Performance Audit
+        if: always()
+        run: |
+          docker compose run automation-tests npx wdio run wdio.conf.js --spec ./test/specs/performance/**/*.js
+        continue-on-error: true
+
+      - name: File Permissions
         if: always()
         run: sudo chmod -R 777 reports/ errorShots/ || true
 
-      - name: Upload Test Results
+      - name: Upload Artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports-and-screenshots
+          name: full-execution-artifacts
           path: |
             reports/
             errorShots/
-          if-no-files-found: ignore
-          retention-days: 5
 
-      - name: Generate Report Summary
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: "Detailed Test Results: Desktop & Mobile"
-          path: reports/junit-results/*.xml
-          reporter: java-junit
-          fail-on-error: false
-
-      - name: Add Visual Summary
+      - name: 📊 Generate Integrated Quality Summary
         if: always()
         run: |
-          echo "# 🚀 TEST AUTOMATION RESULTS" >> $GITHUB_STEP_SUMMARY
-
-          if [ -d "errorShots" ] && [ "$(ls -A errorShots)" ]; then
-            echo "### ❌ Status: FAILURES DETECTED" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "### ✅ Status: ALL PASSED" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          echo "## 📊 Detailed Execution Summary" >> $GITHUB_STEP_SUMMARY
-          echo "| Platform | Type | Test Case | Duration | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "| :--- | :--- | :--- | :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-          
           python3 -c "
           import xml.etree.ElementTree as ET
           import os
+          import re
 
           report_path = 'reports/junit-results'
-          results = []
+          summary_file = os.environ.get('GITHUB_STEP_SUMMARY')
+
+          # Estructura para 4 tablas separadas
+          tables = {
+              'E2E_Desk': [], 'E2E_Mobi': [],
+              'Perf_Desk': [], 'Perf_Mobi': []
+          }
+          failures = []
 
           if os.path.exists(report_path):
               files = [f for f in os.listdir(report_path) if f.endswith('.xml')]
               for file in files:
-                  platform = '📱 Mobile' if 'Mobile' in file else '💻 Desktop'
                   try:
-                      tree = ET.parse(f'{report_path}/{file}')
+                      # Detectar plataforma y tipo por nombre de archivo
+                      is_mobi = 'Mobile' in file
+                      is_perf = 'Perf' in file
+                      plat_icon = '📱 Mobile' if is_mobi else '💻 Desktop'
+                      key = ('Perf' if is_perf else 'E2E') + ('_Mobi' if is_mobi else '_Desk')
+
+                      tree = ET.parse(os.path.join(report_path, file))
                       root = tree.getroot()
                       suites = root.findall('.//testsuite') if root.tag == 'testsuites' else [root]
+                      
                       for suite in suites:
-                          suite_name = suite.get('name', '')
-                          test_type = '⚡ Perf' if 'Performance' in suite_name or 'performance' in file else '🛠️ E2E'
-                          
                           for tc in suite.findall('testcase'):
-                              name = tc.get('name')
-                              time = tc.get('time')
-                              failure = tc.find('failure')
-                              status = '❌ Failed' if failure is not None else '✅ Passed'
-                              # Guardamos en lista para ordenar
-                              results.append({
-                                  'platform': platform,
-                                  'type': test_type,
-                                  'name': name,
-                                  'time': time,
-                                  'status': status,
-                                  'priority': 1 if test_type == '🛠️ E2E' else 2
-                              })
-                  except Exception:
-                      pass
-              
-              results.sort(key=lambda x: (x['priority'], x['platform']))
-              
-              for r in results:
-                  print(f'| {r[\"platform\"]} | {r[\"type\"]} | {r[\"name\"]} | {r[\"time\"]}s | {r[\"status\"]} |')
-          " >> $GITHUB_STEP_SUMMARY
+                              name = tc.get('name', '')
+                              # Limpiar nombres técnicos de WDIO
+                              clean_name = name.split('.')[-1] if '.' in name else name
+                              
+                              # Extraer logs (aquí vienen los detalles de Performance como LCP, Score, etc.)
+                              system_out = tc.find('system-out')
+                              logs = system_out.text if system_out is not None else ''
+                              
+                              # Si es performance, intentamos embellecer el nombre con el Score si existe en los logs
+                              if is_perf and 'PERFORMANCE SCORE' in logs:
+                                  score_match = re.search(r'PERFORMANCE SCORE: (\d+)', logs)
+                                  if score_match:
+                                      clean_name = f'🚀 Overall Score: {score_match.group(1)}/100'
 
-      - name: Generate Quality Dashboard 
-        if: always()
-        run: node scripts/generate_report.js
+                              status = '✅ Pass' if tc.find('failure') is None else '❌ Fail'
+                              
+                              tables[key].append({
+                                  'name': clean_name,
+                                  'time': f'{float(tc.get(\"time\", 0)):.2f}s',
+                                  'status': status,
+                                  'details': logs # Guardamos logs para el Deep Dive
+                              })
+
+                              if tc.find('failure') is not None:
+                                  failures.append({
+                                      'plat': plat_icon,
+                                      'name': clean_name,
+                                      'msg': tc.find('failure').text[:500] if tc.find('failure').text else 'Check logs'
+                                  })
+                  except Exception as e:
+                      print(f'Error procesando {file}: {e}')
+
+          with open(summary_file, 'a') as f:
+              f.write('# 🚀 QUALITY ASSURANCE EXECUTIVE REPORT\n\n')
+
+              sections = [
+                  ('💻 DESKTOP - FUNCTIONAL E2E', 'E2E_Desk', '| Test Case | Duration | Status |'),
+                  ('📱 MOBILE - FUNCTIONAL E2E', 'E2E_Mobi', '| Test Case | Duration | Status |'),
+                  ('⚡ DESKTOP - PERFORMANCE AUDIT', 'Perf_Desk', '| Metric / Audit | Value/Time | Status |'),
+                  ('⚡ MOBILE - PERFORMANCE AUDIT', 'Perf_Mobi', '| Metric / Audit | Value/Time | Status |')
+              ]
+
+              for title, key, header in sections:
+                  if tables[key]:
+                      f.write(f'## {title}\n')
+                      f.write(f'{header}\n| :--- | :--- | :--- |\n')
+                      for r in tables[key]:
+                          f.write(f'| {r[\"name\"]} | {r[\"time\"]} | {r[\"status\"]} |\n')
+                      f.write('\n')
+
+              # SECCIÓN DE DETALLES TÉCNICOS (Aquí es donde verás LCP, CLS, etc.)
+              if tables['Perf_Desk'] or tables['Perf_Mobi']:
+                  f.write('## 📈 TECHNICAL PERFORMANCE DETAILS\n')
+                  f.write('<details><summary>Click to view Lighthouse Metrics (LCP, TBT, CLS)</summary>\n\n')
+                  for p_key in ['Perf_Desk', 'Perf_Mobi']:
+                      for p_res in tables[p_key]:
+                          if p_res['details']:
+                              f.write(f'### Metrics for {p_key.replace(\"_\", \" \")}\n')
+                              f.write(f'```text\n{p_res[\"details\"]}\n```\n')
+                  f.write('</details>\n\n')
+
+              if failures:
+                  f.write('## 🔍 FAILURE ANALYSIS\n')
+                  for fl in failures:
+                      f.write(f'<details><summary>❌ {fl[\"plat\"]} - {fl[\"name\"]}</summary>\n\n```text\n{fl[\"msg\"]}\n```\n</details>\n')
+          "

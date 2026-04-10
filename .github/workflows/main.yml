@@ -61,15 +61,16 @@ jobs:
             reports/
             errorShots/
 
-      - name: Extract Results from Docker
+      - name: Extract Results from Docker (Modo Infalible)
         if: always()
         run: |
           CONTAINER_ID=$(docker ps -a -q --filter "ancestor=automation-challenge-automation-tests" | head -n 1)
           if [ -z "$CONTAINER_ID" ]; then CONTAINER_ID=$(docker ps -a -q | head -n 1); fi
           
-          echo "Copiando desde: $CONTAINER_ID"
-          docker cp $CONTAINER_ID:/app/reports/. ./reports/
-          sudo chmod -R 777 reports/
+          echo "Extrayendo mediante stream desde: $CONTAINER_ID"
+          docker cp $CONTAINER_ID:/app/reports - | tar -x --no-same-owner
+          ls -la reports/
+        continue-on-error: true
 
       - name: Generate Integrated Quality Summary
         if: always()

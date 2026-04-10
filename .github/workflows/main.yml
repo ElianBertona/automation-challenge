@@ -68,22 +68,20 @@ jobs:
           import xml.etree.ElementTree as ET
           import os
           import re
+          from datetime import datetime
 
           report_path = 'reports/junit-results'
           summary_file = os.environ.get('GITHUB_STEP_SUMMARY')
-
-          # Estructura para 4 tablas separadas
-          tables = {
-              'E2E_Desk': [], 'E2E_Mobi': [],
-              'Perf_Desk': [], 'Perf_Mobi': []
-          }
+          
+          tables = {'E2E_Desk': [], 'E2E_Mobi': [], 'Perf_Desk': [], 'Perf_Mobi': []}
           failures = []
+          total_tests = 0
+          passed_tests = 0
+          total_duration = 0.0
 
           if os.path.exists(report_path):
-              files = [f for f in os.listdir(report_path) if f.endswith('.xml')]
-              for file in files:
+              for file in [f for f in os.listdir(report_path) if f.endswith('.xml')]:
                   try:
-                      # Detectar plataforma y tipo por nombre de archivo
                       is_mobi = 'Mobile' in file
                       is_perf = 'Perf' in file
                       plat_icon = '📱 Mobile' if is_mobi else '💻 Desktop'
@@ -95,69 +93,63 @@ jobs:
                       
                       for suite in suites:
                           for tc in suite.findall('testcase'):
+                              total_tests += 1
                               name = tc.get('name', '')
-                              # Limpiar nombres técnicos de WDIO
                               clean_name = name.split('.')[-1] if '.' in name else name
                               
-                              # Extraer logs (aquí vienen los detalles de Performance como LCP, Score, etc.)
+                              duration = float(tc.get('time', 0))
+                              total_duration += duration
+                              
                               system_out = tc.find('system-out')
                               logs = system_out.text if system_out is not None else ''
                               
-                              # Si es performance, intentamos embellecer el nombre con el Score si existe en los logs
                               if is_perf and 'PERFORMANCE SCORE' in logs:
                                   score_match = re.search(r'PERFORMANCE SCORE: (\d+)', logs)
-                                  if score_match:
-                                      clean_name = f'🚀 Overall Score: {score_match.group(1)}/100'
+                                  if score_match: clean_name = f'🚀 Overall Score: {score_match.group(1)}/100'
 
-                              status = '✅ Pass' if tc.find('failure') is None else '❌ Fail'
+                              is_fail = tc.find('failure') is not None
+                              if not is_fail: passed_tests += 1
+                              status = '❌ Fail' if is_fail else '✅ Pass'
                               
-                              tables[key].append({
-                                  'name': clean_name,
-                                  'time': f'{float(tc.get(\"time\", 0)):.2f}s',
-                                  'status': status,
-                                  'details': logs # Guardamos logs para el Deep Dive
-                              })
+                              tables[key].append({'name': clean_name, 'time': f'{duration:.2f}s', 'status': status, 'details': logs})
+                              if is_fail:
+                                  failures.append({'plat': plat_icon, 'name': clean_name, 'msg': tc.find('failure').text[:500] if tc.find('failure').text else 'Error'})
+                  except: pass
 
-                              if tc.find('failure') is not None:
-                                  failures.append({
-                                      'plat': plat_icon,
-                                      'name': clean_name,
-                                      'msg': tc.find('failure').text[:500] if tc.find('failure').text else 'Check logs'
-                                  })
-                  except Exception as e:
-                      print(f'Error procesando {file}: {e}')
+          success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
 
           with open(summary_file, 'a') as f:
-              f.write('# 🚀 QUALITY ASSURANCE EXECUTIVE REPORT\n\n')
+              f.write('# 🚀 QA ENGINEERING DASHBOARD\n\n')
+              
+              # --- MINI-INSIGHTS PANEL (DORA LITE) ---
+              f.write('## 📈 Pipeline Health Insights\n')
+              f.write(f'| Metric | Value | Status |\n| :--- | :--- | :--- |\n')
+              f.write(f'| **Success Rate** | {success_rate:.1f}% | {\"🟢 Healthy\" if success_rate > 90 else \"🔴 Action Required\"} |\n')
+              f.write(f'| **Total Test Duration** | {total_duration:.2f}s | {\"⚡ Fast\" if total_duration < 60 else \"🕒 Moderate\"} |\n')
+              f.write(f'| **Lead Time Context** | Ready for Deploy | {\"✅ Optimized\" if success_rate == 100 else \"⚠️ Risk Detected\"} |\n\n')
 
+              # --- TABLAS DE RESULTADOS ---
               sections = [
-                  ('💻 DESKTOP - FUNCTIONAL E2E', 'E2E_Desk', '| Test Case | Duration | Status |'),
-                  ('📱 MOBILE - FUNCTIONAL E2E', 'E2E_Mobi', '| Test Case | Duration | Status |'),
-                  ('⚡ DESKTOP - PERFORMANCE AUDIT', 'Perf_Desk', '| Metric / Audit | Value/Time | Status |'),
-                  ('⚡ MOBILE - PERFORMANCE AUDIT', 'Perf_Mobi', '| Metric / Audit | Value/Time | Status |')
+                  ('💻 DESKTOP - E2E', 'E2E_Desk', '| Test Case | Duration | Status |'),
+                  ('📱 MOBILE - E2E', 'E2E_Mobi', '| Test Case | Duration | Status |'),
+                  ('⚡ DESKTOP - PERFORMANCE', 'Perf_Desk', '| Metric / Audit | Score/Time | Status |'),
+                  ('⚡ MOBILE - PERFORMANCE', 'Perf_Mobi', '| Metric / Audit | Score/Time | Status |')
               ]
 
               for title, key, header in sections:
                   if tables[key]:
-                      f.write(f'## {title}\n')
-                      f.write(f'{header}\n| :--- | :--- | :--- |\n')
-                      for r in tables[key]:
-                          f.write(f'| {r[\"name\"]} | {r[\"time\"]} | {r[\"status\"]} |\n')
+                      f.write(f'### {title}\n{header}\n| :--- | :--- | :--- |\n')
+                      for r in tables[key]: f.write(f'| {r[\"name\"]} | {r[\"time\"]} | {r[\"status\"]} |\n')
                       f.write('\n')
 
-              # SECCIÓN DE DETALLES TÉCNICOS (Aquí es donde verás LCP, CLS, etc.)
-              if tables['Perf_Desk'] or tables['Perf_Mobi']:
-                  f.write('## 📈 TECHNICAL PERFORMANCE DETAILS\n')
-                  f.write('<details><summary>Click to view Lighthouse Metrics (LCP, TBT, CLS)</summary>\n\n')
-                  for p_key in ['Perf_Desk', 'Perf_Mobi']:
-                      for p_res in tables[p_key]:
-                          if p_res['details']:
-                              f.write(f'### Metrics for {p_key.replace(\"_\", \" \")}\n')
-                              f.write(f'```text\n{p_res[\"details\"]}\n```\n')
+              if any(tables['Perf_Desk']) or any(tables['Perf_Mobi']):
+                  f.write('## 🔬 Performance Technical Logs\n<details><summary>Click to expand Lighthouse metrics</summary>\n')
+                  for k in ['Perf_Desk', 'Perf_Mobi']:
+                      for p in tables[k]:
+                          if p['details']: f.write(f'#### {k}\\n```text\\n{p[\"details\"]}\\n```\\n')
                   f.write('</details>\n\n')
 
               if failures:
-                  f.write('## 🔍 FAILURE ANALYSIS\n')
-                  for fl in failures:
-                      f.write(f'<details><summary>❌ {fl[\"plat\"]} - {fl[\"name\"]}</summary>\n\n```text\n{fl[\"msg\"]}\n```\n</details>\n')
+                  f.write('## 🔍 Failure Analysis\n')
+                  for fl in failures: f.write(f'<details><summary>❌ {fl[\"plat\"]} - {fl[\"name\"]}</summary>\\n\\n```text\\n{fl[\"msg\"]}\\n```\\n</details>\\n')
           "

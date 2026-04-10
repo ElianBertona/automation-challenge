@@ -61,34 +61,24 @@ jobs:
             reports/
             errorShots/
 
-      - name: 📤 Extract Results from Docker (Bypass de Permisos)
+      - name: Extract Results from Docker
         if: always()
         run: |
           CONTAINER_ID=$(docker ps -a -q --filter "ancestor=automation-challenge-automation-tests" | head -n 1)
           if [ -z "$CONTAINER_ID" ]; then CONTAINER_ID=$(docker ps -a -q | head -n 1); fi
           
           echo "Extrayendo desde: $CONTAINER_ID"
-          
-          # 1. Creamos una carpeta temporal limpia fuera de nuestro workspace
           mkdir -p /tmp/docker_reports
-          
-          # 2. Copiamos los archivos de Docker ahí (Docker no se quejará)
           docker cp $CONTAINER_ID:/app/reports/. /tmp/docker_reports/
-          
-          # 3. Nos hacemos dueños absolutos de esos archivos (runner es el usuario de GitHub)
           sudo chown -R $USER:$USER /tmp/docker_reports/
-          
-          # 4. Ahora que son nuestros, los movemos a nuestra carpeta final
           cp -r /tmp/docker_reports/* ./reports/ || true
-          
-          # Verificamos que los XML (con las métricas dentro) estén ahí
           ls -R reports/junit-results/
         continue-on-error: true
 
-      - name: Generate Integrated Quality Summary
+      - name: Generate Quality Summary
         if: always()
         run: |
-          python3 -c "
+          cat << 'EOF' > temp_report.py
           import xml.etree.ElementTree as ET
           import os
           import re
@@ -150,7 +140,6 @@ jobs:
               f.write('# 🚀 QA ENGINEERING DASHBOARD\n\n')
               f.write('## 📈 System Health & DORA Metrics\n')
               f.write('| Key Performance Indicator | Value | Status |\n| :--- | :--- | :--- |\n')
-              # Usamos comillas simples para los f-strings de Python dentro del bloque run para evitar conflictos
               f.write('| **Quality Gate (Success Rate)** | {:.1f}% | {} |\n'.format(success_rate, '🟢 Healthy' if success_rate > 95 else '🔴 Risk'))
               f.write('| **Cycle Time (Execution)** | {:.2f}s | {} |\n'.format(total_duration, '⚡ Optimized' if total_duration < 120 else '🕒 Warning'))
               f.write('| **Reliability Index** | {}/{} Passed | {} |\n'.format(passed_tests, total_tests, '🛡️ Stable' if success_rate == 100 else '⚠️ Unstable'))
@@ -183,5 +172,6 @@ jobs:
               if failures:
                   f.write('## 🔍 Failure Analysis\n')
                   for fl in failures: f.write('<details><summary>❌ {} - {}</summary>\n\n```text\n{}\n```\n</details>\n'.format(fl['plat'], fl['name'], fl['msg']))
-          ""
+          EOF
+          python3 temp_report.py
         continue-on-error: true

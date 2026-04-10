@@ -61,6 +61,16 @@ jobs:
             reports/
             errorShots/
 
+      - name: Extract Results from Docker
+        if: always()
+        run: |
+          CONTAINER_ID=$(docker ps -a -q --filter "ancestor=automation-challenge-automation-tests" | head -n 1)
+          if [ -z "$CONTAINER_ID" ]; then CONTAINER_ID=$(docker ps -a -q | head -n 1); fi
+          
+          echo "Copiando desde: $CONTAINER_ID"
+          docker cp $CONTAINER_ID:/app/reports/. ./reports/
+          sudo chmod -R 777 reports/
+
       - name: Generate Integrated Quality Summary
         if: always()
         run: |
@@ -160,4 +170,4 @@ jobs:
                   f.write('## 🔍 Failure Analysis\n')
                   for fl in failures: f.write('<details><summary>❌ {} - {}</summary>\n\n```text\n{}\n```\n</details>\n'.format(fl['plat'], fl['name'], fl['msg']))
           ""
-        continue-on-error: true 
+        continue-on-error: true

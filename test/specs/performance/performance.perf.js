@@ -1,6 +1,6 @@
-import { expect } from "@wdio/globals";
+import fs from 'fs';
+import path from 'path';
 
-// test/specs/performance/performance.perf.js
 describe("Performance Audit", () => {
     it("Lighthouse Performance Analysis", async () => {
         await browser.enablePerformanceAudits();
@@ -9,17 +9,20 @@ describe("Performance Audit", () => {
         const score = await browser.getPerformanceScore();
         const scorePercentage = (score * 100).toFixed(0);
 
-        // Guardamos el score en la carpeta que YA se está mapeando bien
-        const fs = require('fs');
-        const path = require('path');
-        const dir = './reports';
-        
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        
-        // Escribimos el score en un TXT que el script de Node ya sabe leer
-        fs.writeFileSync(path.join(dir, 'perf-score.txt'), scorePercentage.toString());
+        const metrics = await browser.getMetrics();
+        const { largestContentfulPaint, totalBlockingTime, cumulativeLayoutShift } = metrics;
 
         console.log(`PERFORMANCE SCORE: ${scorePercentage}/100`);
+        console.log(`METRICS_START`);
+        console.log(`LCP: ${(largestContentfulPaint / 1000).toFixed(2)}s`);
+        console.log(`TBT: ${totalBlockingTime.toFixed(0)}ms`);
+        console.log(`CLS: ${cumulativeLayoutShift.toFixed(3)}`);
+        console.log(`METRICS_END`);
+
+        const dir = './reports';
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(path.join(dir, 'perf-data.txt'), `Score: ${scorePercentage}`);
+
         expect(score).toBeGreaterThan(0.5);
     });
 });

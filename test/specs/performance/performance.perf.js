@@ -19,10 +19,6 @@ describe("Performance Audit", () => {
         console.log(`CLS: ${cumulativeLayoutShift.toFixed(3)}`);
         console.log(`METRICS_END`);
 
-        const dir = './reports';
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(path.join(dir, 'perf-data.txt'), `Score: ${scorePercentage}`);
-
         expect(score).toBeGreaterThan(0.5);
     });
 });

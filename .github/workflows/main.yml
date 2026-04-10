@@ -75,7 +75,7 @@ jobs:
           ls -R reports/junit-results/
         continue-on-error: true
 
-      - name: Generate Quality Summary
+      - name: 📊 Generate Integrated Quality Summary
         if: always()
         run: |
           cat << 'EOF' > temp_report.py
@@ -105,7 +105,6 @@ jobs:
                       for suite in suites:
                           for tc in suite.findall('testcase'):
                               name = tc.get('name', '')
-                              
                               if not is_perf and ('performance' in name.lower() or 'score' in name.lower()):
                                   continue
 
@@ -115,14 +114,10 @@ jobs:
                               
                               system_out = tc.find('system-out')
                               logs = system_out.text if system_out is not None else ''
-                              
                               clean_name = name.split('.')[-1] if '.' in name else name
-                              if 'Overall Performance Score' in clean_name or 'Analysis' in clean_name:
-                                  clean_name = '🚀 Lighthouse Audit'
-
-                              if is_perf and 'PERFORMANCE SCORE' in logs:
-                                  score_match = re.search(r'PERFORMANCE SCORE: (\d+/\d+)', logs)
-                                  if score_match: clean_name = f'🚀 Audit Score: {score_match.group(1)}'
+                              if 'PERFORMANCE SCORE' in logs:
+                                  score_match = re.search(r'PERFORMANCE SCORE: (\d+)', logs)
+                                  if score_match: clean_name = f'🚀 Audit Score: {score_match.group(1)}/100'
 
                               is_fail = tc.find('failure') is not None
                               if not is_fail: passed_tests += 1
@@ -132,42 +127,43 @@ jobs:
                               
                               if is_fail:
                                   failures.append({'plat': plat_icon, 'name': clean_name, 'msg': tc.find('failure').text[:500] if tc.find('failure').text else 'Error'})
-                  except: pass
+                  except Exception as e:
+                      print(f'Error procesando {file}: {e}')
 
           success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
 
           with open(summary_file, 'a') as f:
               f.write('# 🚀 QA ENGINEERING DASHBOARD\n\n')
               f.write('## 📈 System Health & DORA Metrics\n')
-              f.write('| Key Performance Indicator | Value | Status |\n| :--- | :--- | :--- |\n')
-              f.write('| **Quality Gate (Success Rate)** | {:.1f}% | {} |\n'.format(success_rate, '🟢 Healthy' if success_rate > 95 else '🔴 Risk'))
-              f.write('| **Cycle Time (Execution)** | {:.2f}s | {} |\n'.format(total_duration, '⚡ Optimized' if total_duration < 120 else '🕒 Warning'))
-              f.write('| **Reliability Index** | {}/{} Passed | {} |\n'.format(passed_tests, total_tests, '🛡️ Stable' if success_rate == 100 else '⚠️ Unstable'))
-              f.write('| **Deployment Readiness** | Ready for Release | {} |\n\n'.format('🚀 APPROVED' if success_rate == 100 else '🛑 BLOCKED'))
+              f.write('| KPI | Value | Status |\n| :--- | :--- | :--- |\n')
+              f.write('| **Quality Gate** | {:.1f}% | {} |\n'.format(success_rate, '🟢 Healthy' if success_rate > 95 else '🔴 Risk'))
+              f.write('| **Cycle Time** | {:.2f}s | {} |\n'.format(total_duration, '⚡ Optimized' if total_duration < 120 else '🕒 Warning'))
+              f.write('| **Readiness** | Ready for Release | {} |\n\n'.format('🚀 APPROVED' if success_rate == 100 else '🛑 BLOCKED'))
 
-              for plat_label, k in [('💻 DESKTOP', 'E2E_Desk'), ('📱 MOBILE', 'E2E_Mobi')]:
+              for plat_label, k in [('💻 DESKTOP', 'E2E_Desk'), ('📱 MOBILE', 'E2E_Mobi'), ('🚀 PERF DESKTOP', 'Perf_Desk'), ('🚀 PERF MOBILE', 'Perf_Mobi')]:
                   if tables[k]:
-                      f.write('### {} - FUNCTIONAL E2E\n'.format(plat_label))
-                      f.write('| Test Case | Duration | Status |\n| :--- | :--- | :--- |\n')
+                      f.write(f'### {plat_label}\n')
+                      f.write('| Test Case | Time | Status |\n| :--- | :--- | :--- |\n')
                       for r in tables[k]: f.write('| {} | {} | {} |\n'.format(r['name'], r['time'], r['status']))
                       f.write('\n')
-
-              for plat_label, k in [('💻 DESKTOP', 'Perf_Desk'), ('📱 MOBILE', 'Perf_Mobi')]:
-                  if tables[k]:
-                      f.write('### {} - QUALITY AUDIT\n'.format(plat_label))
-                      f.write('| Metric / Audit | Score/Time | Status |\n| :--- | :--- | :--- |\n')
-                      for r in tables[k]: f.write('| {} | {} | {} |\n'.format(r['name'], r['time'], r['status']))
-                      f.write('\n')
-
-              if any(tables['Perf_Desk']) or any(tables['Perf_Mobi']):
-                  f.write('## 🔬 Performance Deep Dive\n')
-                  f.write('<details><summary>Click to view Core Web Vitals (LCP, TBT, CLS)</summary>\n\n')
-                  for k in ['Perf_Desk', 'Perf_Mobi']:
-                      for p in tables[k]:
-                          if 'METRICS_START' in p['details']:
-                              m_text = p['details'].split('METRICS_START')[1].split('METRICS_END')[0]
-                              f.write('#### {} Metrics\n```text\n{}\n```\n'.format(k.replace('_', ' '), m_text.strip()))
-                  f.write('</details>\n\n')
+              f.write('## 🔬 Performance Deep Dive\n')
+              f.write('<details><summary>Click to view Core Web Vitals</summary>\n\n')
+              
+              found_any_metric = False
+              for k in ['Perf_Desk', 'Perf_Mobi', 'E2E_Desk', 'E2E_Mobi']:
+                  for p in tables[k]:
+                      # Buscamos LCP, TBT o CLS en cualquier parte del log
+                      metric_lines = re.findall(r'(LCP: .*|TBT: .*|CLS: .*|Métricas: .*)', p['details'])
+                      if metric_lines:
+                          found_any_metric = True
+                          f.write(f'#### Metrics for {p["name"]}\n```text\n')
+                          for line in metric_lines: f.write(f'{line}\n')
+                          f.write('```\n')
+              
+              if not found_any_metric:
+                  f.write('*No se encontraron métricas detalladas en los logs de los tests.*\n')
+              
+              f.write('</details>\n\n')
 
               if failures:
                   f.write('## 🔍 Failure Analysis\n')

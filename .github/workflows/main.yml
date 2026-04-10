@@ -92,7 +92,6 @@ jobs:
                           for tc in suite.findall('testcase'):
                               name = tc.get('name', '')
                               
-                              # FILTRO: Evitar que performance aparezca en tablas E2E
                               if not is_perf and ('performance' in name.lower() or 'score' in name.lower()):
                                   continue
 
@@ -103,12 +102,10 @@ jobs:
                               system_out = tc.find('system-out')
                               logs = system_out.text if system_out is not None else ''
                               
-                              # Limpieza de nombres
                               clean_name = name.split('.')[-1] if '.' in name else name
                               if 'Overall Performance Score' in clean_name or 'Analysis' in clean_name:
                                   clean_name = '🚀 Lighthouse Audit'
 
-                              # Extraer Score de los logs para ponerlo en la tabla
                               if is_perf and 'PERFORMANCE SCORE' in logs:
                                   score_match = re.search(r'PERFORMANCE SCORE: (\d+/\d+)', logs)
                                   if score_match: clean_name = f'🚀 Audit Score: {score_match.group(1)}'
@@ -127,32 +124,28 @@ jobs:
 
           with open(summary_file, 'a') as f:
               f.write('# 🚀 QA ENGINEERING DASHBOARD\n\n')
-              
-              # --- PIPELINE HEALTH INSIGHTS ---
               f.write('## 📈 System Health & DORA Metrics\n')
               f.write('| Key Performance Indicator | Value | Status |\n| :--- | :--- | :--- |\n')
-              f.write(f'| **Quality Gate (Success Rate)** | {success_rate:.1f}% | {\"🟢 Healthy\" if success_rate > 95 else \"🔴 Risk\"} |\n')
-              f.write(f'| **Cycle Time (Execution)** | {total_duration:.2f}s | {\"⚡ Optimized\" if total_duration < 120 else \"🕒 Warning\"} |\n')
-              f.write(f'| **Reliability Index** | {passed_tests}/{total_tests} Passed | {\"🛡️ Stable\" if success_rate == 100 else \"⚠️ Unstable\"} |\n')
-              f.write(f'| **Deployment Readiness** | Ready for Release | {\"🚀 APPROVED\" if success_rate == 100 else \"🛑 BLOCKED\"} |\n\n')
+              # Usamos comillas simples para los f-strings de Python dentro del bloque run para evitar conflictos
+              f.write('| **Quality Gate (Success Rate)** | {:.1f}% | {} |\n'.format(success_rate, '🟢 Healthy' if success_rate > 95 else '🔴 Risk'))
+              f.write('| **Cycle Time (Execution)** | {:.2f}s | {} |\n'.format(total_duration, '⚡ Optimized' if total_duration < 120 else '🕒 Warning'))
+              f.write('| **Reliability Index** | {}/{} Passed | {} |\n'.format(passed_tests, total_tests, '🛡️ Stable' if success_rate == 100 else '⚠️ Unstable'))
+              f.write('| **Deployment Readiness** | Ready for Release | {} |\n\n'.format('🚀 APPROVED' if success_rate == 100 else '🛑 BLOCKED'))
 
-              # --- RESULTADOS E2E ---
               for plat_label, k in [('💻 DESKTOP', 'E2E_Desk'), ('📱 MOBILE', 'E2E_Mobi')]:
                   if tables[k]:
-                      f.write(f'### {plat_label} - FUNCTIONAL E2E\n')
+                      f.write('### {} - FUNCTIONAL E2E\n'.format(plat_label))
                       f.write('| Test Case | Duration | Status |\n| :--- | :--- | :--- |\n')
-                      for r in tables[k]: f.write(f'| {r[\"name\"]} | {r[\"time\"]} | {r[\"status\"]} |\n')
+                      for r in tables[k]: f.write('| {} | {} | {} |\n'.format(r['name'], r['time'], r['status']))
                       f.write('\n')
 
-              # --- RESULTADOS PERFORMANCE ---
               for plat_label, k in [('💻 DESKTOP', 'Perf_Desk'), ('📱 MOBILE', 'Perf_Mobi')]:
                   if tables[k]:
-                      f.write(f'### {plat_label} - QUALITY AUDIT\n')
+                      f.write('### {} - QUALITY AUDIT\n'.format(plat_label))
                       f.write('| Metric / Audit | Score/Time | Status |\n| :--- | :--- | :--- |\n')
-                      for r in tables[k]: f.write(f'| {r[\"name\"]} | {r[\"time\"]} | {r[\"status\"]} |\n')
+                      for r in tables[k]: f.write('| {} | {} | {} |\n'.format(r['name'], r['time'], r['status']))
                       f.write('\n')
 
-              # --- DEEP DIVE PERFORMANCE (Métricas técnicas) ---
               if any(tables['Perf_Desk']) or any(tables['Perf_Mobi']):
                   f.write('## 🔬 Performance Deep Dive\n')
                   f.write('<details><summary>Click to view Core Web Vitals (LCP, TBT, CLS)</summary>\n\n')
@@ -160,10 +153,11 @@ jobs:
                       for p in tables[k]:
                           if 'METRICS_START' in p['details']:
                               m_text = p['details'].split('METRICS_START')[1].split('METRICS_END')[0]
-                              f.write(f'#### {k.replace(\"_\", \" \")} Metrics\n```text\n{m_text.strip()}\n```\n')
+                              f.write('#### {} Metrics\n```text\n{}\n```\n'.format(k.replace('_', ' '), m_text.strip()))
                   f.write('</details>\n\n')
 
               if failures:
                   f.write('## 🔍 Failure Analysis\n')
-                  for fl in failures: f.write(f'<details><summary>❌ {fl[\"plat\"]} - {fl[\"name\"]}</summary>\n\n```text\n{fl[\"msg\"]}\n```\n</details>\n')
-          "
+                  for fl in failures: f.write('<details><summary>❌ {} - {}</summary>\n\n```text\n{}\n```\n</details>\n'.format(fl['plat'], fl['name'], fl['msg']))
+          ""
+        continue-on-error: true 

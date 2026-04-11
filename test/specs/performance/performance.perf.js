@@ -1,29 +1,20 @@
+// performance.perf.js
 describe("Performance Audit", () => {
     it("Lighthouse Performance Analysis", async () => {
         await browser.enablePerformanceAudits();
         await browser.url("/");
-
         const score = await browser.getPerformanceScore();
-        const scorePercentage = (score * 100).toFixed(0);
+        const metrics = await browser.getMetrics();
 
-        console.log(`PERFORMANCE SCORE: ${scorePercentage}/100`);
-        console.log(`METRICS_START`);
+        const out = [
+            `PERFORMANCE SCORE: ${(score * 100).toFixed(0)}`,
+            `LCP: ${(metrics.largestContentfulPaint / 1000).toFixed(2)}s`,
+            `TBT: ${metrics.totalBlockingTime.toFixed(0)}ms`,
+            `CLS: ${metrics.cumulativeLayoutShift.toFixed(3)}`
+        ].join('\n');
 
-        try {
-            const metrics = await browser.getMetrics();
-            
-            const lcp = metrics && metrics.largestContentfulPaint ? (metrics.largestContentfulPaint / 1000).toFixed(2) + 's' : 'N/A';
-            const tbt = metrics && metrics.totalBlockingTime ? metrics.totalBlockingTime.toFixed(0) + 'ms' : 'N/A';
-            const cls = metrics && metrics.cumulativeLayoutShift ? metrics.cumulativeLayoutShift.toFixed(3) : 'N/A';
-
-            console.log(`LCP: ${lcp}`);
-            console.log(`TBT: ${tbt}`);
-            console.log(`CLS: ${cls}`);
-        } catch (error) {
-            console.log(`Métricas detalladas no disponibles: ${error.message}`);
-        }
-
-        console.log(`METRICS_END`);
+        console.log(out);
+        process.stdout.write(out + '\n'); // Doble seguridad
 
         expect(score).toBeGreaterThan(0.5);
     });

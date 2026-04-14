@@ -112,19 +112,20 @@ class StrangerPage {
     throw new Error("There are no other items to interact with in the list");
   }
 
+  async getRowImage(text) {
+    const row = await this.getRowByText(text);
+    return await row.$(StrangerMap.dynamic.imageInRow);
+  }
+
+  async getItemImageSrc(text) {
+    const row = await this.getRowByText(text);
+    const image = await row.$(StrangerMap.dynamic.imageInRow);
+    return await image.getAttribute("src");
+}
+
   async isTextInList(text) {
     const element = await this.getElementByText(text);
     return await element.isDisplayed().catch(() => false);
-  }
-
-  async isItemFullyCreated(text) {
-    const row = await this.getRowByText(text);
-    const image = await row.$(StrangerMap.dynamic.imageInRow);
-
-    const isTextDisplayed = await row.isDisplayed();
-    const imageSrc = await image.getAttribute("src");
-
-    return isTextDisplayed && !!imageSrc && imageSrc.length > 0;
   }
 }
 

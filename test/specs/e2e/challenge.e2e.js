@@ -20,11 +20,15 @@ describe("Angular Strangerlist: Challenge Suite", () => {
   });
 
   it("TC-01: Create item with image and text", async () => {
+    const expectedFileName = path.basename(imagePath);
+
     await StrangerPage.createItem(uniqueText, imagePath);
+    const isTextVisible = await StrangerPage.isTextInList(uniqueText);
+    expect(isTextVisible).toBe(true);
 
-    const isFullyCreated = await StrangerPage.isItemFullyCreated(uniqueText);
+    const actualSrc = await StrangerPage.getItemImageSrc(uniqueText);
+    expect(actualSrc).toContain(expectedFileName);
 
-    await expect(isFullyCreated).toBe(true);
   });
 
   it("TC-02: Edit another existing item", async () => {

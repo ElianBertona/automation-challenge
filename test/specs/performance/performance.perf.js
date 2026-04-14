@@ -1,21 +1,21 @@
-import { expect } from "@wdio/globals";
-import fs from "fs";
-
+// performance.perf.js
 describe("Performance Audit", () => {
-  it("Overall Performance Score: ${Math.round(score * 100)}/100`", async () => {
-    await browser.enablePerformanceAudits();
-    await browser.url("/");
+    it("Lighthouse Performance Analysis", async () => {
+        await browser.enablePerformanceAudits();
+        await browser.url("/");
+        const score = await browser.getPerformanceScore();
+        const metrics = await browser.getMetrics();
 
-    const score = await browser.getPerformanceScore();
-    const scorePercentage = (score * 100).toFixed(0);
+        const out = [
+            `PERFORMANCE SCORE: ${(score * 100).toFixed(0)}`,
+            `LCP: ${(metrics.largestContentfulPaint / 1000).toFixed(2)}s`,
+            `TBT: ${metrics.totalBlockingTime.toFixed(0)}ms`,
+            `CLS: ${metrics.cumulativeLayoutShift.toFixed(3)}`
+        ].join('\n');
 
-    console.log(`PERFORMANCE SCORE: ${scorePercentage}/100`);
+        console.log(out);
+        process.stdout.write(out + '\n'); // Doble seguridad
 
-    if (!fs.existsSync("./reports")) {
-      fs.mkdirSync("./reports");
-    }
-    fs.writeFileSync("./reports/perf-score.txt", scorePercentage);
-
-    expect(score).toBeGreaterThan(0.5);
-  });
+        expect(score).toBeGreaterThan(0.5);
+    });
 });
